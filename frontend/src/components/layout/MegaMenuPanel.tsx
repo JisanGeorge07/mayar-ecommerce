@@ -1,6 +1,8 @@
 import { useLocale } from '@/hooks/useLocale';
+import { Link } from 'react-router-dom';
 import type { NavMenuItem, MegaMenuSection } from '@/types/navigation';
 import { motion } from 'framer-motion';
+import { resolveMegaMenuLink } from '@/lib/catalogResolver';
 
 interface MegaMenuPanelProps {
   item: NavMenuItem;
@@ -9,8 +11,6 @@ interface MegaMenuPanelProps {
 }
 
 const MegaMenuPanel = ({ item, onMouseEnter, onMouseLeave }: MegaMenuPanelProps) => {
-  const { t } = useLocale();
-
   if (!item.sections?.length) return null;
 
   return (
@@ -45,12 +45,12 @@ const MegaMenuColumn = ({ section }: { section: MegaMenuSection }) => {
       <ul className="space-y-1.5">
         {section.links.map((link) => (
           <li key={link.id}>
-            <a
-              href={`/category/${link.slug}`}
+            <Link
+              to={resolveMegaMenuLink(link.id)}
               className="block text-[13px] text-muted-foreground hover:text-brand transition-colors py-0.5"
             >
               {t(link.label)}
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

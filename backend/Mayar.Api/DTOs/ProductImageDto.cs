@@ -11,4 +11,5 @@ public class ProductImageDto
     public string? ImageUrl { get; set; }
     public string? ImageAlt { get; set; }
     public bool IsActive { get; set; }
+    public bool IsPrimary { get; set; }
 }

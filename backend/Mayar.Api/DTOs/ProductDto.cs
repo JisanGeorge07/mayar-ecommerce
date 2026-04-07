@@ -17,8 +17,10 @@ public class ProductDto
     public string? ShortDescriptionArabic { get; set; }
     public string? FullDescriptionEnglish { get; set; }
     public string? FullDescriptionArabic { get; set; }
-    public decimal? BasePrice { get; set; }
-    public decimal? CompareAtPrice { get; set; }
+    public decimal? BasePriceKWD { get; set; }
+    public decimal? CompareAtPriceKWD { get; set; }
+    public decimal? BasePriceINR { get; set; }
+    public decimal? CompareAtPriceINR { get; set; }
     public decimal? Rating { get; set; }
     public int? ReviewCount { get; set; }
 
@@ -38,8 +40,21 @@ public class ProductDto
     public List<ProductImageDto> Images { get; set; } = [];
     public List<ProductColorDto> Colors { get; set; } = [];
     public List<ProductSizeDto> Sizes { get; set; } = [];
+    public List<ProductVariantDto> Variants { get; set; } = [];
     public List<ProductFeatureDto> Features { get; set; } = [];
     public List<ProductSpecificationDto> Specifications { get; set; } = [];
     public List<ProductCareInstructionDto> CareInstructions { get; set; } = [];
     public bool IsActive { get; set; }
+    public string? Status { get; set; }
+
+    //Metadata
+    public string? MetaTitle { get; set; }
+    public string? CanonicalUrl { get; set; }
+    public string? MetaKeywords { get; set; }
+    public string? MetaDescription { get; set; }
+    public string? OGTitle { get; set; }
+    public string? OGDescription { get; set; }
+    public string? OGImageUrl { get; set; }
+    public string? TwitterTitle { get; set; }
+    public string? TwitterDescription { get; set; }
 }

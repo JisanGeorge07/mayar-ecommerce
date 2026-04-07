@@ -9,7 +9,9 @@ interface LocaleContextValue {
   setLang: (lang: LanguageCode) => void;
   setCurrency: (currency: CurrencyCode) => void;
   t: (text: TranslatedText) => string;
-  formatPrice: (amountKWD: number) => string;
+  formatPrice: (amount: number, currencyOverride?: CurrencyCode) => string;
+  getPrice: (kwdPrice?: number, inrPrice?: number) => number;
+  syncWithSettings: (enabledLanguages: LanguageCode[], enabledCurrencies: CurrencyCode[]) => void;
 }
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
@@ -35,17 +37,39 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 
   const formatPrice = useCallback(
-    (amountKWD: number) => {
-      const curr = currencies[currency];
-      const converted = amountKWD * curr.exchangeRate;
-      const formatted = converted.toFixed(curr.decimalPlaces);
+    (amount: number, currencyOverride?: CurrencyCode) => {
+      const curr = currencies[currencyOverride || currency];
+      const formatted = amount.toFixed(curr.decimalPlaces);
       return `${curr.symbol} ${formatted}`;
     },
     [currency]
   );
 
+  const getPrice = useCallback(
+    (kwdPrice?: number, inrPrice?: number) => {
+      if (currency === 'INR') {
+        return inrPrice || 0;
+      }
+      return kwdPrice || 0;
+    },
+    [currency]
+  );
+
+  // Sync locale with settings - switch to enabled language/currency if current is disabled
+  const syncWithSettings = useCallback(
+    (enabledLanguages: LanguageCode[], enabledCurrencies: CurrencyCode[]) => {
+      if (enabledLanguages.length > 0 && !enabledLanguages.includes(lang)) {
+        setLangState(enabledLanguages[0]);
+      }
+      if (enabledCurrencies.length > 0 && !enabledCurrencies.includes(currency)) {
+        setCurrency(enabledCurrencies[0]);
+      }
+    },
+    [lang, currency]
+  );
+
   return (
-    <LocaleContext.Provider value={{ lang, currency, dir, setLang, setCurrency, t, formatPrice }}>
+    <LocaleContext.Provider value={{ lang, currency, dir, setLang, setCurrency, t, formatPrice, getPrice, syncWithSettings }}>
       {children}
     </LocaleContext.Provider>
   );

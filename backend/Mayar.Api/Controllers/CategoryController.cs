@@ -10,6 +10,14 @@ namespace Mayar.Api.Controllers
     [ApiController]
     public class CategoryController(ICategoryService categoryService) : ControllerBase
     {
+        // MegaMenu - hierarchical menu for navigation
+        [HttpGet("megamenu")]
+        public async Task<IActionResult> GetMegaMenu()
+        {
+            var menuItems = await categoryService.GetMegaMenuAsync();
+            return Ok(new ApiResponse<List<NavMenuItemDto>> { Success = true, Message = "Mega menu retrieved successfully.", Data = menuItems });
+        }
+
         //Top Category
         [HttpGet("top")]
         public async Task<IActionResult> GetAllTopCategories()
@@ -67,6 +75,15 @@ namespace Mayar.Api.Controllers
             if (!success) return NotFound(new ApiResponse<object> { Success = false, Message = "Top category not found." });
 
             return Ok(new ApiResponse<object> { Success = true, Message = "Top category deleted successfully." });
+        }
+
+        [HttpPatch("top/toggle-status/{id}")]
+        public async Task<IActionResult> ToggleTopCategoryStatus(Guid id)
+        {
+            var success = await categoryService.ToggleTopCategoryStatusAsync(id);
+            if (!success) return NotFound(new ApiResponse<object> { Success = false, Message = "Top category not found." });
+
+            return Ok(new ApiResponse<object> { Success = true, Message = "Top category status toggled successfully." });
         }
 
         //Middle Category
@@ -130,6 +147,15 @@ namespace Mayar.Api.Controllers
             return Ok(new ApiResponse<object> { Success = true, Message = "Middle category deleted successfully." });
         }
 
+        [HttpPatch("middle/toggle-status/{id}")]
+        public async Task<IActionResult> ToggleMiddleCategoryStatus(Guid id)
+        {
+            var success = await categoryService.ToggleMiddleCategoryStatusAsync(id);
+            if (!success) return NotFound(new ApiResponse<object> { Success = false, Message = "Middle category not found." });
+
+            return Ok(new ApiResponse<object> { Success = true, Message = "Middle category status toggled successfully." });
+        }
+
         //Bottom Category
         [HttpGet("bottom")]
         public async Task<IActionResult> GetBottomCategories()
@@ -188,6 +214,15 @@ namespace Mayar.Api.Controllers
             if (!success) return NotFound(new ApiResponse<object> { Success = false, Message = "Bottom category not found." });
 
             return Ok(new ApiResponse<object> { Success = true, Message = "Bottom category deleted successfully." });
+        }
+
+        [HttpPatch("bottom/toggle-status/{id}")]
+        public async Task<IActionResult> ToggleBottomCategoryStatus(Guid id)
+        {
+            var success = await categoryService.ToggleBottomCategoryStatusAsync(id);
+            if (!success) return NotFound(new ApiResponse<object> { Success = false, Message = "Bottom category not found." });
+
+            return Ok(new ApiResponse<object> { Success = true, Message = "Bottom category status toggled successfully." });
         }
     }
 }

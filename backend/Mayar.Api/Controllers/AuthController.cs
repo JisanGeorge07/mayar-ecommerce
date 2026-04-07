@@ -34,6 +34,18 @@ namespace Mayar.Api.Controllers
             return Ok(result);
         }
 
+        [HttpPost("admin/login")]
+        public async Task<ActionResult<TokenResponseDto>> AdminLogin(LoginDto request)
+        {
+            var result = await authService.AdminLoginAsync(request.Email, request.Password);
+            if (result is null)
+            {
+                return Unauthorized(new { message = "Invalid credentials or insufficient permissions." });
+            }
+            logger.LogInformation("Admin login successful");
+            return Ok(result);
+        }
+
         [HttpPost("refresh-token")]
         public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
         {
@@ -84,6 +96,29 @@ namespace Mayar.Api.Controllers
             }
             logger.LogInformation("User logged out: {UserId}", userId);
             return Ok(new { message = "Logged out successfully" });
+        }
+
+        [Authorize]
+        [HttpPut("update-profile")]
+        public async Task<ActionResult<UserResponseDto>> UpdateProfile([FromBody] UserUpdateDto request)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized(new { message = "Invalid user ID" });
+
+            var user = await authService.UpdateUserAsync(userId, request);
+            if (user is null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            logger.LogInformation("User profile updated: {UserId}", userId);
+            return Ok(new
+            {
+                success = true,
+                message = "Profile updated successfully",
+                data = user
+            });
         }
     }
 }

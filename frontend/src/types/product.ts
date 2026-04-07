@@ -22,13 +22,17 @@ export interface ProductSize {
 
 export interface ProductVariant {
   id: string;
+  productId: string;
   colorId: string;
-  sizeId?: string;
-  sku: string;
-  stock: number;
-  price: number;
-  compareAtPrice?: number;
-  images: string[];
+  sizeId: string;
+  basePriceKWD?: number;
+  compareAtPriceKWD?: number;
+  basePriceINR?: number;
+  compareAtPriceINR?: number;
+  stockQuantity?: number;
+  inStock: boolean;
+  isDefault: boolean;
+  sku?: string;
 }
 
 export interface ReviewItem {
@@ -42,6 +46,12 @@ export interface ReviewItem {
   helpfulCount: number;
 }
 
+export interface ProductFeature {
+  id: string;
+  iconName?: string;
+  label: TranslatedText;
+}
+
 export interface ProductItem {
   id: string;
   slug: string;
@@ -51,6 +61,7 @@ export interface ProductItem {
   fullDescription: TranslatedText;
   categoryId: string;
   subcategoryId?: string;
+  productTypeId?: string;
   collectionIds?: string[];
   tags?: string[];
   gender?: 'women' | 'men' | 'unisex';
@@ -58,8 +69,10 @@ export interface ProductItem {
   colors: ProductColor[];
   sizes: ProductSize[];
   variants: ProductVariant[];
-  basePrice: number;
-  compareAtPrice?: number;
+  basePriceKWD: number;
+  compareAtPriceKWD?: number;
+  basePriceINR?: number;
+  compareAtPriceINR?: number;
   rating: number;
   reviewCount: number;
   isNew?: boolean;
@@ -68,6 +81,7 @@ export interface ProductItem {
   isOnSale?: boolean;
   inStock: boolean;
   material?: TranslatedText;
+  features?: ProductFeature[];
   specifications?: { label: TranslatedText; value: TranslatedText }[];
   shippingInfo?: TranslatedText;
   returnInfo?: TranslatedText;
@@ -114,6 +128,8 @@ export interface ProductFilters {
   brands?: string[];
   priceRange?: [number, number];
   isOnSale?: boolean;
+  isNew?: boolean;
+  isBestSeller?: boolean;
   inStock?: boolean;
   rating?: number;
 }

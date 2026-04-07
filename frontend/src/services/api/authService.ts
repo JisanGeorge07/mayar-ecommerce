@@ -4,6 +4,7 @@ import type {
   SignupRequest,
   UserProfile,
   TokenResponse,
+  UpdateProfileRequest,
 } from '@/types/auth';
 
 const TOKEN_KEY = 'token';
@@ -60,6 +61,24 @@ export const authService = {
       return res.data.user;
     } catch {
       return null;
+    }
+  },
+
+  async updateProfile(data: UpdateProfileRequest): Promise<{ success: boolean; user?: UserProfile; message: string }> {
+    try {
+      const res = await api.put<{ success: boolean; data: UserProfile; message: string }>('/auth/update-profile', {
+        name: data.name,
+        phoneNumber: data.phoneNumber || undefined,
+        address: data.address || undefined,
+        country: data.country || undefined,
+        pinCode: data.pinCode || undefined,
+      });
+      return { success: true, user: res.data.data, message: res.data.message };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Failed to update profile',
+      };
     }
   },
 

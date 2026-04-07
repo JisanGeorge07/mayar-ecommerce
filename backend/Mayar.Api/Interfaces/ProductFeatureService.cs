@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Mayar.Api.Services;
 
-public class ProductFeatureService(AppDbContext context, ICloudinaryService cloudinaryService) : IProductFeatureService
+public class ProductFeatureService(AppDbContext context) : IProductFeatureService
 {
     public async Task<List<ProductFeatureDto>> GetAllAsync()
     {
@@ -37,14 +37,8 @@ public class ProductFeatureService(AppDbContext context, ICloudinaryService clou
             ProductId = dto.ProductId,
             LabelEnglish = dto.LabelEnglish,
             LabelArabic = dto.LabelArabic,
-            ImageAlt = dto.ImageAlt
+            IconName = dto.IconName,
         };
-
-        if (dto.ImageFile != null)
-        {
-            var imageUrl = await cloudinaryService.UploadImageAsync(dto.ImageFile, "mayar-product-features");
-            entity.ImageUrl = imageUrl;
-        }
 
         context.ProductFeatures.Add(entity);
         await context.SaveChangesAsync();
@@ -62,13 +56,7 @@ public class ProductFeatureService(AppDbContext context, ICloudinaryService clou
 
         entity.LabelEnglish = dto.LabelEnglish;
         entity.LabelArabic = dto.LabelArabic;
-        entity.ImageAlt = dto.ImageAlt;
-
-        if (dto.ImageFile != null)
-        {
-            var imageUrl = await cloudinaryService.UploadImageAsync(dto.ImageFile, "mayar-product-features");
-            entity.ImageUrl = imageUrl;
-        }
+        entity.IconName = dto.IconName;
 
         await context.SaveChangesAsync();
 

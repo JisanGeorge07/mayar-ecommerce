@@ -8,6 +8,5 @@ public class ProductSize
     public Guid ProductId { get; set; }
     public Product Product { get; set; } = null!;
     public string? Label { get; set; }
-    public int? Stock { get; set; }
     public bool IsActive { get; set; } = true;
 }

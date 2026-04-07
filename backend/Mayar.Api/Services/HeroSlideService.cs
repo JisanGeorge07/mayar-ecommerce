@@ -10,32 +10,77 @@ public class HeroSlideService(AppDbContext context, ICloudinaryService cloudinar
 {
     public async Task<List<HeroSlideDto>> GetAllAsync()
     {
-        var heroSlides = await context.HeroSlides.ToListAsync();
+        var heroSlides = await context.HeroSlides
+            .Include(h => h.Category)
+            .Include(h => h.Subcategory)
+            .Include(h => h.ProductType)
+            .Include(h => h.Product)
+            .OrderBy(h => h.SortOrder)
+            .ToListAsync();
+        return heroSlides.Select(h => h.ToHeroSlideDto()).ToList();
+    }
+
+    public async Task<List<HeroSlideDto>> GetActivePublishedAsync()
+    {
+        var heroSlides = await context.HeroSlides
+            .Include(h => h.Category)
+            .Include(h => h.Subcategory)
+            .Include(h => h.ProductType)
+            .Include(h => h.Product)
+            .Where(h => h.IsActive && h.IsPublished)
+            .OrderBy(h => h.SortOrder)
+            .ToListAsync();
         return heroSlides.Select(h => h.ToHeroSlideDto()).ToList();
     }
 
     public async Task<HeroSlideDto?> GetByIdAsync(Guid id)
     {
-        var heroSlides = await context.HeroSlides.FindAsync(id);
-        if (heroSlides == null)
+        var heroSlide = await context.HeroSlides
+            .Include(h => h.Category)
+            .Include(h => h.Subcategory)
+            .Include(h => h.ProductType)
+            .Include(h => h.Product)
+            .FirstOrDefaultAsync(h => h.Id == id);
+        if (heroSlide == null)
         {
             return null;
         }
-        return heroSlides.ToHeroSlideDto();
+        return heroSlide.ToHeroSlideDto();
     }
 
     public async Task<HeroSlideDto> CreateAsync(HeroSlideDto heroSlideDto)
     {
-        if (heroSlideDto.ImageFile != null)
+        // Upload desktop image if provided
+        if (heroSlideDto.DesktopImageFile != null)
         {
-            var imageUrl = await cloudinaryService.UploadImageAsync(heroSlideDto.ImageFile, "mayar-hero-slides");
+            var imageUrl = await cloudinaryService.UploadImageAsync(heroSlideDto.DesktopImageFile, "mayar-hero-slides");
             if (!string.IsNullOrEmpty(imageUrl))
             {
-                heroSlideDto.ImageUrl = imageUrl;
+                heroSlideDto.DesktopImageUrl = imageUrl;
             }
         }
 
+        // Upload mobile image if provided
+        if (heroSlideDto.MobileImageFile != null)
+        {
+            var imageUrl = await cloudinaryService.UploadImageAsync(heroSlideDto.MobileImageFile, "mayar-hero-slides-mobile");
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                heroSlideDto.MobileImageUrl = imageUrl;
+            }
+        }
+
+        // Set sort order to be last if not specified
+        if (heroSlideDto.SortOrder == 0)
+        {
+            var maxOrder = await context.HeroSlides.MaxAsync(h => (int?)h.SortOrder) ?? 0;
+            heroSlideDto.SortOrder = maxOrder + 1;
+        }
+
         var heroSlide = heroSlideDto.ToHeroSlideEntity();
+        heroSlide.CreatedAt = DateTime.UtcNow;
+        heroSlide.UpdatedAt = DateTime.UtcNow;
+
         context.HeroSlides.Add(heroSlide);
         await context.SaveChangesAsync();
         return heroSlide.ToHeroSlideDto();
@@ -49,33 +94,65 @@ public class HeroSlideService(AppDbContext context, ICloudinaryService cloudinar
             return null;
         }
 
-        if (heroSlideDto.ImageFile != null)
+        // Upload desktop image if provided
+        if (heroSlideDto.DesktopImageFile != null)
         {
-            var imageUrl = await cloudinaryService.UploadImageAsync(heroSlideDto.ImageFile, "mayar-hero-slides");
+            var imageUrl = await cloudinaryService.UploadImageAsync(heroSlideDto.DesktopImageFile, "mayar-hero-slides");
             if (!string.IsNullOrEmpty(imageUrl))
             {
-                heroSlideDto.ImageUrl = imageUrl;
+                heroSlideDto.DesktopImageUrl = imageUrl;
             }
         }
 
-        existingHeroSlide.TitleEnglish = string.IsNullOrWhiteSpace(heroSlideDto.TitleEnglish) ? string.Empty : heroSlideDto.TitleEnglish;
-        existingHeroSlide.TitleArabic = string.IsNullOrWhiteSpace(heroSlideDto.TitleArabic) ? string.Empty : heroSlideDto.TitleArabic;
-        existingHeroSlide.SubtitleEnglish = string.IsNullOrWhiteSpace(heroSlideDto.SubtitleEnglish) ? string.Empty : heroSlideDto.SubtitleEnglish;
-        existingHeroSlide.SubtitleArabic = string.IsNullOrWhiteSpace(heroSlideDto.SubtitleArabic) ? string.Empty : heroSlideDto.SubtitleArabic;
-        existingHeroSlide.OldPrice = heroSlideDto.OldPrice == 0 ? 0 : heroSlideDto.OldPrice;
-        existingHeroSlide.NewPrice = heroSlideDto.NewPrice == 0 ? 0 : heroSlideDto.NewPrice;
-        existingHeroSlide.ButtonTextEnglish = string.IsNullOrWhiteSpace(heroSlideDto.ButtonTextEnglish) ? string.Empty : heroSlideDto.ButtonTextEnglish;
-        existingHeroSlide.ButtonTextArabic = string.IsNullOrWhiteSpace(heroSlideDto.ButtonTextArabic) ? string.Empty : heroSlideDto.ButtonTextArabic;
-        existingHeroSlide.ButtonLink = string.IsNullOrWhiteSpace(heroSlideDto.ButtonLink) ? string.Empty : heroSlideDto.ButtonLink;
-        existingHeroSlide.IsActive = heroSlideDto.IsActive;
-
-        if (!string.IsNullOrEmpty(heroSlideDto.ImageUrl))
+        // Upload mobile image if provided
+        if (heroSlideDto.MobileImageFile != null)
         {
-            existingHeroSlide.ImageUrl = heroSlideDto.ImageUrl;
+            var imageUrl = await cloudinaryService.UploadImageAsync(heroSlideDto.MobileImageFile, "mayar-hero-slides-mobile");
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                heroSlideDto.MobileImageUrl = imageUrl;
+            }
+        }
+
+        // Update all fields
+        existingHeroSlide.BannerName = heroSlideDto.BannerName;
+        existingHeroSlide.Slug = heroSlideDto.Slug;
+        existingHeroSlide.LabelEnglish = heroSlideDto.LabelEnglish;
+        existingHeroSlide.LabelArabic = heroSlideDto.LabelArabic;
+        existingHeroSlide.TitleEnglish = heroSlideDto.TitleEnglish;
+        existingHeroSlide.TitleArabic = heroSlideDto.TitleArabic;
+        existingHeroSlide.DescriptionEnglish = heroSlideDto.DescriptionEnglish;
+        existingHeroSlide.DescriptionArabic = heroSlideDto.DescriptionArabic;
+        existingHeroSlide.CtaTextEnglish = heroSlideDto.CtaTextEnglish;
+        existingHeroSlide.CtaTextArabic = heroSlideDto.CtaTextArabic;
+        existingHeroSlide.CurrentPriceKWD = heroSlideDto.CurrentPriceKWD;
+        existingHeroSlide.OldPriceKWD = heroSlideDto.OldPriceKWD;
+        existingHeroSlide.CurrentPriceINR = heroSlideDto.CurrentPriceINR;
+        existingHeroSlide.OldPriceINR = heroSlideDto.OldPriceINR;
+        existingHeroSlide.LinkType = heroSlideDto.LinkType;
+        existingHeroSlide.CategoryId = heroSlideDto.CategoryId;
+        existingHeroSlide.SubcategoryId = heroSlideDto.SubcategoryId;
+        existingHeroSlide.ProductTypeId = heroSlideDto.ProductTypeId;
+        existingHeroSlide.ProductId = heroSlideDto.ProductId;
+        existingHeroSlide.CustomUrl = heroSlideDto.CustomUrl;
+        existingHeroSlide.AltText = heroSlideDto.AltText;
+        existingHeroSlide.SortOrder = heroSlideDto.SortOrder;
+        existingHeroSlide.IsActive = heroSlideDto.IsActive;
+        existingHeroSlide.IsPublished = heroSlideDto.IsPublished;
+        existingHeroSlide.UpdatedAt = DateTime.UtcNow;
+
+        // Update images only if new URLs are provided
+        if (!string.IsNullOrEmpty(heroSlideDto.DesktopImageUrl))
+        {
+            existingHeroSlide.DesktopImageUrl = heroSlideDto.DesktopImageUrl;
+        }
+
+        if (!string.IsNullOrEmpty(heroSlideDto.MobileImageUrl))
+        {
+            existingHeroSlide.MobileImageUrl = heroSlideDto.MobileImageUrl;
         }
 
         await context.SaveChangesAsync();
-
         return existingHeroSlide.ToHeroSlideDto();
     }
 
@@ -90,6 +167,31 @@ public class HeroSlideService(AppDbContext context, ICloudinaryService cloudinar
         context.HeroSlides.Remove(existingHeroSlide);
         await context.SaveChangesAsync();
 
+        return true;
+    }
+
+    public async Task<bool> ReorderAsync(List<Guid> orderedIds)
+    {
+        var heroSlides = await context.HeroSlides
+            .Where(h => orderedIds.Contains(h.Id))
+            .ToListAsync();
+
+        if (heroSlides.Count != orderedIds.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < orderedIds.Count; i++)
+        {
+            var slide = heroSlides.FirstOrDefault(h => h.Id == orderedIds[i]);
+            if (slide != null)
+            {
+                slide.SortOrder = i + 1;
+                slide.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await context.SaveChangesAsync();
         return true;
     }
 }

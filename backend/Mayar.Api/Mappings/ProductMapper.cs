@@ -23,8 +23,10 @@ public static class ProductMapper
             ShortDescriptionArabic = entity.ShortDescriptionArabic,
             FullDescriptionEnglish = entity.FullDescriptionEnglish,
             FullDescriptionArabic = entity.FullDescriptionArabic,
-            BasePrice = entity.BasePrice,
-            CompareAtPrice = entity.CompareAtPrice,
+            BasePriceINR = entity.BasePriceINR,
+            CompareAtPriceINR = entity.CompareAtPriceINR,
+            BasePriceKWD = entity.BasePriceKWD,
+            CompareAtPriceKWD = entity.CompareAtPriceKWD,
             Rating = entity.Rating,
             ReviewCount = entity.ReviewCount,
             IsNew = entity.IsNew,
@@ -36,13 +38,24 @@ public static class ProductMapper
             ShippingInfoArabic = entity.ShippingInfoArabic,
             ReturnInfoEnglish = entity.ReturnInfoEnglish,
             ReturnInfoArabic = entity.ReturnInfoArabic,
-            Images = entity.Images.Select(i => i.ToProductImageDto()).ToList(),
+            Images = entity.Images.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.Id).Select(i => i.ToProductImageDto()).ToList(),
             Colors = entity.Colors.Select(c => c.ToProductColorDto()).ToList(),
             Sizes = entity.Sizes.Select(s => s.ToProductSizeDto()).ToList(),
+            Variants = entity.Variants.OrderByDescending(v => v.IsDefault).ThenBy(v => v.ProductColor.NameEnglish).ThenBy(v => v.ProductSize.Label).Select(v => v.ToProductVariantDto()).ToList(),
             Features = entity.Features.Select(f => f.ToProductFeatureDto()).ToList(),
             Specifications = entity.Specifications.Select(s => s.ToProductSpecificationDto()).ToList(),
             CareInstructions = entity.CareInstructions.Select(c => c.ToProductCareInstructionDto()).ToList(),
-            IsActive = entity.IsActive
+            IsActive = entity.IsActive,
+            Status = entity.Status,
+            MetaTitle = entity.MetaTitle,
+            MetaDescription = entity.MetaDescription,
+            MetaKeywords = entity.MetaKeywords,
+            CanonicalUrl = entity.CanonicalUrl,
+            OGTitle = entity.MetaTitle,
+            OGDescription = entity.MetaDescription,
+            OGImageUrl = entity.OGImageUrl,
+            TwitterTitle = entity.TwitterTitle,
+            TwitterDescription = entity.TwitterDescription,
         };
     }
 
@@ -63,8 +76,10 @@ public static class ProductMapper
             ShortDescriptionArabic = dto.ShortDescriptionArabic,
             FullDescriptionEnglish = dto.FullDescriptionEnglish,
             FullDescriptionArabic = dto.FullDescriptionArabic,
-            BasePrice = dto.BasePrice,
-            CompareAtPrice = dto.CompareAtPrice,
+            BasePriceINR = dto.BasePriceINR,
+            CompareAtPriceINR = dto.CompareAtPriceINR,
+            BasePriceKWD = dto.BasePriceKWD,
+            CompareAtPriceKWD = dto.CompareAtPriceKWD,
             Rating = dto.Rating,
             ReviewCount = dto.ReviewCount,
             IsNew = dto.IsNew,
@@ -76,6 +91,16 @@ public static class ProductMapper
             ShippingInfoArabic = dto.ShippingInfoArabic,
             ReturnInfoEnglish = dto.ReturnInfoEnglish,
             ReturnInfoArabic = dto.ReturnInfoArabic,
+            Status = dto.Status,
+            MetaTitle = dto.MetaTitle,
+            MetaDescription = dto.MetaDescription,
+            MetaKeywords = dto.MetaKeywords,
+            CanonicalUrl = dto.CanonicalUrl,
+            OGTitle = dto.MetaTitle,
+            OGDescription = dto.MetaDescription,
+            OGImageUrl = dto.OGImageUrl,
+            TwitterTitle = dto.TwitterTitle,
+            TwitterDescription = dto.TwitterDescription,
         };
     }
 
@@ -87,7 +112,8 @@ public static class ProductMapper
             ProductId = entity.ProductId,
             ImageUrl = entity.ImageUrl,
             ImageAlt = entity.ImageAlt,
-            IsActive = entity.IsActive
+            IsActive = entity.IsActive,
+            IsPrimary = entity.IsPrimary
         };
     }
 
@@ -99,6 +125,7 @@ public static class ProductMapper
             ProductId = dto.ProductId,
             ImageUrl = dto.ImageUrl,
             ImageAlt = dto.ImageAlt,
+            IsPrimary = dto.IsPrimary
         };
     }
 
@@ -134,7 +161,6 @@ public static class ProductMapper
             Id = entity.Id,
             ProductId = entity.ProductId,
             Label = entity.Label,
-            Stock = entity.Stock,
             IsActive = entity.IsActive
         };
     }
@@ -146,7 +172,6 @@ public static class ProductMapper
             Id = dto.Id,
             ProductId = dto.ProductId,
             Label = dto.Label,
-            Stock = dto.Stock,
         };
     }
 
@@ -156,8 +181,7 @@ public static class ProductMapper
         {
             Id = entity.Id,
             ProductId = entity.ProductId,
-            ImageUrl = entity.ImageUrl,
-            ImageAlt = entity.ImageAlt,
+            IconName = entity.IconName,
             LabelEnglish = entity.LabelEnglish,
             LabelArabic = entity.LabelArabic,
             IsActive = entity.IsActive
@@ -170,8 +194,7 @@ public static class ProductMapper
         {
             Id = dto.Id,
             ProductId = dto.ProductId,
-            ImageUrl = dto.ImageUrl,
-            ImageAlt = dto.ImageAlt,
+            IconName = dto.IconName,
             LabelEnglish = dto.LabelEnglish,
             LabelArabic = dto.LabelArabic,
         };

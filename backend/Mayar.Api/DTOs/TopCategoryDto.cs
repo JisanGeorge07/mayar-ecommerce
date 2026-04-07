@@ -11,5 +11,8 @@ public class TopCategoryDto
     public string? ImageAlt { get; set; }
     public string? TitleEnglish { get; set; }
     public string? TitleArabic { get; set; }
+    public string? BadgeEnglish { get; set; }
+    public string? BadgeArabic { get; set; }
     public bool IsActive { get; set; }
+    public long? DisplayOrder { get; set; }
 }

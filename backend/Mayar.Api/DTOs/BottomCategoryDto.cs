@@ -11,4 +11,5 @@ public class BottomCategoryDto
     public string? TitleEnglish { get; set; }
     public string? TitleArabic { get; set; }
     public bool IsActive { get; set; }
+    public long? DisplayOrder { get; set; }
 }

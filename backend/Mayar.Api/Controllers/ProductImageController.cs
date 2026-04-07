@@ -63,4 +63,15 @@ public class ProductImageController(IProductImageService service) : ControllerBa
         }
         return Ok(new ApiResponse<object> { Success = true, Message = "Image deleted successfully." });
     }
+
+    [HttpPatch("set-primary/{id}")]
+    public async Task<IActionResult> SetAsPrimary(Guid id)
+    {
+        var result = await service.SetAsPrimaryAsync(id);
+        if (!result)
+        {
+            return NotFound(new ApiResponse<object> { Success = false, Message = "Image not found." });
+        }
+        return Ok(new ApiResponse<object> { Success = true, Message = "Image set as primary successfully." });
+    }
 }

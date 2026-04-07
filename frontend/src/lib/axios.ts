@@ -32,6 +32,13 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Add session ID header for guest users (used for cart, order, payment)
+  const sessionId = localStorage.getItem("mayar_session_id");
+  if (sessionId) {
+    config.headers["X-Session-Id"] = sessionId;
+  }
+
   return config;
 });
 

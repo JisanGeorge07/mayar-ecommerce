@@ -64,6 +64,24 @@ namespace Mayar.Api.Services
             return await CreateTokenResponse(user);
         }
 
+        public async Task<TokenResponseDto?> AdminLoginAsync(string email, string password)
+        {
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                return null;
+            }
+
+            if (user.Role != "Admin")
+            {
+                logger.LogWarning("Non-admin user attempted admin login: {UserId}", user.Id);
+                return null;
+            }
+
+            logger.LogInformation("Admin logged in: {UserId}", user.Id);
+            return await CreateTokenResponse(user);
+        }
+
         public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request)
         {
             var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
@@ -94,6 +112,34 @@ namespace Mayar.Api.Services
             var user = await context.Users.FindAsync(userId);
             if (user is null)
                 return null;
+
+            return new UserResponseDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role,
+                PhoneNumber = user.PhoneNumber,
+                Address = user.Address,
+                Country = user.Country,
+                PinCode = user.PinCode,
+            };
+        }
+
+        public async Task<UserResponseDto?> UpdateUserAsync(Guid userId, UserUpdateDto request)
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user is null)
+                return null;
+
+            user.Name = request.Name;
+            user.PhoneNumber = request.PhoneNumber;
+            user.Address = request.Address;
+            user.Country = request.Country;
+            user.PinCode = request.PinCode;
+
+            await context.SaveChangesAsync();
+            logger.LogInformation("User profile updated: {UserId}", user.Id);
 
             return new UserResponseDto
             {

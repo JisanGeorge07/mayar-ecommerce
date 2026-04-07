@@ -25,21 +25,54 @@ public class WishlistService(AppDbContext context) : IWishlistService
         return wishlist?.ToWishlistDto();
     }
 
-    public async Task<WishlistDto> CreateAsync(Guid userId, Guid productId)
+    public async Task<WishlistDto> CreateAsync(Guid userId, Guid productVariantId)
     {
+        // Check if this variant is already in wishlist
         var existing = await context.Wishlists
-            .FirstOrDefaultAsync(w => w.UserId == userId && w.ProductId == productId);
+            .FirstOrDefaultAsync(w => w.UserId == userId && w.ProductVariantId == productVariantId);
 
         if (existing != null)
         {
             return existing.ToWishlistDto();
         }
 
+        // Fetch variant details with related data
+        var variant = await context.ProductVariants
+            .Include(v => v.ProductColor)
+            .Include(v => v.ProductSize)
+            .Include(v => v.Product)
+            .FirstOrDefaultAsync(v => v.Id == productVariantId);
+
+        if (variant == null)
+        {
+            throw new InvalidOperationException("Product variant not found.");
+        }
+
+        // Get the primary image for this product
+        var primaryImage = await context.ProductImages
+            .Where(img => img.ProductId == variant.ProductId && img.IsPrimary)
+            .FirstOrDefaultAsync();
+
+        // Create wishlist entry with variant details
         var wishlist = new Wishlist
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            ProductId = productId,
+            ProductId = variant.ProductId,
+            ProductVariantId = productVariantId,
+            ProductNameEnglish = variant.Product?.NameEnglish,
+            ProductNameArabic = variant.Product?.NameArabic,
+            Brand = variant.Product?.BrandEnglish,
+            ProductSlug = variant.Product?.Slug,
+            ColorNameEnglish = variant.ProductColor?.NameEnglish,
+            ColorNameArabic = variant.ProductColor?.NameArabic,
+            ColorHex = variant.ProductColor?.Hex,
+            SizeLabel = variant.ProductSize?.Label,
+            PriceKWD = variant.BasePriceKWD ?? variant.Product?.BasePriceKWD,
+            PriceINR = variant.BasePriceINR ?? variant.Product?.BasePriceINR,
+            CompareAtPriceKWD = variant.CompareAtPriceKWD ?? variant.Product?.CompareAtPriceKWD,
+            CompareAtPriceINR = variant.CompareAtPriceINR ?? variant.Product?.CompareAtPriceINR,
+            ImageUrl = primaryImage?.ImageUrl
         };
 
         context.Wishlists.Add(wishlist);
@@ -80,5 +113,11 @@ public class WishlistService(AppDbContext context) : IWishlistService
     {
         return await context.Wishlists
             .AnyAsync(w => w.UserId == userId && w.ProductId == productId);
+    }
+
+    public async Task<bool> IsVariantInWishlistAsync(Guid userId, Guid productVariantId)
+    {
+        return await context.Wishlists
+            .AnyAsync(w => w.UserId == userId && w.ProductVariantId == productVariantId);
     }
 }

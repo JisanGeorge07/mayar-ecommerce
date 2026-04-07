@@ -11,4 +11,8 @@ public class BottomCategory
     public string? TitleEnglish { get; set; }
     public string? TitleArabic { get; set; }
     public bool IsActive { get; set; } = true;
+    public long? DisplayOrder { get; set; }
+
+    // Navigation property
+    public MiddleCategory? MiddleCategory { get; set; }
 }

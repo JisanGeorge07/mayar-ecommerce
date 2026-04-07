@@ -45,14 +45,25 @@ namespace Mayar.Api.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] CreateWishlistRequest request)
         {
-            var created = await wishlistService.CreateAsync(request.UserId, request.ProductId);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id },
-                new ApiResponse<WishlistDto>
+            try
+            {
+                var created = await wishlistService.CreateAsync(request.UserId, request.ProductVariantId);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id },
+                    new ApiResponse<WishlistDto>
+                    {
+                        Success = true,
+                        Message = "Product added to wishlist successfully.",
+                        Data = created
+                    });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new ApiResponse<object>
                 {
-                    Success = true,
-                    Message = "Product added to wishlist successfully.",
-                    Data = created
+                    Success = false,
+                    Message = ex.Message
                 });
+            }
         }
 
         [HttpDelete("delete/{id}")]
@@ -106,11 +117,23 @@ namespace Mayar.Api.Controllers
                 Data = isInWishlist
             });
         }
+
+        [HttpGet("check-variant")]
+        public async Task<IActionResult> IsVariantInWishlist([FromQuery] Guid userId, [FromQuery] Guid productVariantId)
+        {
+            var isInWishlist = await wishlistService.IsVariantInWishlistAsync(userId, productVariantId);
+            return Ok(new ApiResponse<bool>
+            {
+                Success = true,
+                Message = isInWishlist ? "Variant is in wishlist." : "Variant is not in wishlist.",
+                Data = isInWishlist
+            });
+        }
     }
 
     public class CreateWishlistRequest
     {
         public Guid UserId { get; set; }
-        public Guid ProductId { get; set; }
+        public Guid ProductVariantId { get; set; }
     }
 }

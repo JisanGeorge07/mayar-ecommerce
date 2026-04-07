@@ -9,6 +9,60 @@ namespace Mayar.Api.Services;
 
 public class CategoryService(AppDbContext context, ICloudinaryService cloudinaryService) : ICategoryService
 {
+    // MegaMenu - hierarchical menu for navigation
+    public async Task<List<NavMenuItemDto>> GetMegaMenuAsync()
+    {
+        // Get all active top categories with their middle and bottom categories
+        var topCategories = await context.TopCategories
+            .Where(tc => tc.IsActive)
+            .Include(tc => tc.MiddleCategories.Where(mc => mc.IsActive))
+                .ThenInclude(mc => mc.BottomCategories.Where(bc => bc.IsActive))
+            .ToListAsync();
+
+        var menuItems = new List<NavMenuItemDto>();
+
+        foreach (var topCategory in topCategories)
+        {
+            var sections = topCategory.MiddleCategories
+                .Select(mc => new MegaMenuSectionDto
+                {
+                    Id = mc.Id.ToString(),
+                    Title = new TranslatedTextDto { En = mc.TitleEnglish, Ar = mc.TitleArabic },
+                    Links = mc.BottomCategories
+                        .Select(bc => new MegaMenuLinkDto
+                        {
+                            Id = bc.Id.ToString(),
+                            Label = new TranslatedTextDto { En = bc.TitleEnglish, Ar = bc.TitleArabic },
+                            Slug = bc.Slug ?? string.Empty
+                        }).ToList()
+                }).ToList();
+
+            var menuItem = new NavMenuItemDto
+            {
+                Id = topCategory.Id.ToString(),
+                Label = new TranslatedTextDto { En = topCategory.TitleEnglish, Ar = topCategory.TitleArabic },
+                Slug = $"/{topCategory.Slug ?? string.Empty}",
+                Type = sections.Count > 0 ? "mega" : "link",
+                Sections = sections.Count > 0 ? sections : null,
+                FeaturedImage = topCategory.ImageUrl
+            };
+
+            // Add badge if present
+            if (!string.IsNullOrEmpty(topCategory.BadgeEnglish) || !string.IsNullOrEmpty(topCategory.BadgeArabic))
+            {
+                menuItem.Badge = new TranslatedTextDto
+                {
+                    En = topCategory.BadgeEnglish,
+                    Ar = topCategory.BadgeArabic
+                };
+            }
+
+            menuItems.Add(menuItem);
+        }
+
+        return menuItems;
+    }
+
     //Top Category
     public async Task<List<TopCategoryDto>> GetAllTopCategoriesAsync()
     {
@@ -40,6 +94,17 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
 
         var entity = dto.ToTopCategoryEntity();
         entity.Slug = SlugGenerator.GenerateSlug(dto.TitleEnglish ?? string.Empty);
+
+        var displayOrder = context.TopCategories.Max(x => x.DisplayOrder);
+        if (displayOrder == 0 || displayOrder == null)
+        {
+            entity.DisplayOrder = 1;
+        }
+        else
+        {
+            entity.DisplayOrder = (long)displayOrder + 1;
+        }
+
         context.TopCategories.Add(entity);
         await context.SaveChangesAsync();
         return entity.ToTopCategoryDto();
@@ -64,6 +129,9 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
         entity.TitleEnglish = string.IsNullOrWhiteSpace(dto.TitleEnglish) ? string.Empty : dto.TitleEnglish;
         entity.TitleArabic = string.IsNullOrWhiteSpace(dto.TitleArabic) ? string.Empty : dto.TitleArabic;
         entity.ImageAlt = string.IsNullOrWhiteSpace(dto.ImageAlt) ? string.Empty : dto.ImageAlt;
+        entity.BadgeEnglish = string.IsNullOrWhiteSpace(dto.BadgeEnglish) ? string.Empty : dto.BadgeEnglish;
+        entity.BadgeArabic = string.IsNullOrWhiteSpace(dto.BadgeArabic) ? string.Empty : dto.BadgeArabic;
+        entity.DisplayOrder = dto.DisplayOrder == 0 ? 0 : dto.DisplayOrder;
         entity.IsActive = dto.IsActive;
 
         if (!string.IsNullOrEmpty(dto.ImageUrl))
@@ -83,6 +151,19 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
         }
 
         context.TopCategories.Remove(entity);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ToggleTopCategoryStatusAsync(Guid id)
+    {
+        var entity = await context.TopCategories.FindAsync(id);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        entity.IsActive = !entity.IsActive;
         await context.SaveChangesAsync();
         return true;
     }
@@ -119,6 +200,16 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
         var entity = dto.ToMiddleCategoryEntity();
         entity.Slug = SlugGenerator.GenerateSlug(dto.TitleEnglish ?? string.Empty);
 
+        var displayOrder = context.MiddleCategories.Max(x => x.DisplayOrder);
+        if (displayOrder == 0 || displayOrder == null)
+        {
+            entity.DisplayOrder = 1;
+        }
+        else
+        {
+            entity.DisplayOrder = (long)displayOrder + 1;
+        }
+
         context.MiddleCategories.Add(entity);
         await context.SaveChangesAsync();
         return entity.ToMiddleCategoryDto();
@@ -150,6 +241,7 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
         entity.ButtonTextArabic = string.IsNullOrWhiteSpace(dto.ButtonTextArabic) ? string.Empty : dto.ButtonTextArabic;
         entity.ButtonLink = string.IsNullOrWhiteSpace(dto.ButtonLink) ? string.Empty : dto.ButtonLink;
         entity.IsActive = dto.IsActive;
+        entity.DisplayOrder = dto.DisplayOrder == 0 ? 0 : dto.DisplayOrder;
 
         if (!string.IsNullOrEmpty(dto.ImageUrl))
         {
@@ -169,6 +261,19 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
         }
 
         context.MiddleCategories.Remove(entity);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ToggleMiddleCategoryStatusAsync(Guid id)
+    {
+        var entity = await context.MiddleCategories.FindAsync(id);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        entity.IsActive = !entity.IsActive;
         await context.SaveChangesAsync();
         return true;
     }
@@ -196,6 +301,15 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
 
         var entity = dto.ToBottomCategoryEntity();
         entity.Slug = SlugGenerator.GenerateSlug(dto.TitleEnglish ?? string.Empty);
+        var displayOrder = context.BottomCategories.Max(x => x.DisplayOrder);
+        if (displayOrder == 0 || displayOrder == null)
+        {
+            entity.DisplayOrder = 1;
+        }
+        else
+        {
+            entity.DisplayOrder = (long)displayOrder + 1;
+        }
         context.BottomCategories.Add(entity);
         await context.SaveChangesAsync();
         return entity.ToBottomCategoryDto();
@@ -213,6 +327,7 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
         entity.TitleEnglish = string.IsNullOrWhiteSpace(dto.TitleEnglish) ? string.Empty : dto.TitleEnglish;
         entity.TitleArabic = string.IsNullOrWhiteSpace(dto.TitleArabic) ? string.Empty : dto.TitleArabic;
         entity.IsActive = dto.IsActive;
+        entity.DisplayOrder = dto.DisplayOrder == 0 ? 0 : dto.DisplayOrder;
 
         await context.SaveChangesAsync();
         return true;
@@ -227,6 +342,19 @@ public class CategoryService(AppDbContext context, ICloudinaryService cloudinary
         }
 
         context.BottomCategories.Remove(entity);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ToggleBottomCategoryStatusAsync(Guid id)
+    {
+        var entity = await context.BottomCategories.FindAsync(id);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        entity.IsActive = !entity.IsActive;
         await context.SaveChangesAsync();
         return true;
     }

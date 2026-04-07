@@ -1,9 +1,20 @@
+import { useEffect } from 'react';
 import { useLocale } from '@/hooks/useLocale';
-import { siteSettings, userMenuItems } from '@/data/mock/siteSettings';
-import type { LanguageCode, CurrencyCode } from '@/types';
+import { useSettings } from '@/context/SettingsContext';
+import { siteSettings } from '@/data/mock/siteSettings';
+import { useTrackingPopup } from '@/context/TrackingPopupContext';
 
 const TopBar = () => {
-  const { lang, currency, setLang, setCurrency, t } = useLocale();
+  const { lang, currency, setLang, setCurrency, t, syncWithSettings } = useLocale();
+  const { enabledLanguages, enabledCurrencies, isLoading, settings } = useSettings();
+  const { open: openTracking } = useTrackingPopup();
+
+  // Sync locale with settings when settings are loaded
+  useEffect(() => {
+    if (!isLoading) {
+      syncWithSettings(enabledLanguages, enabledCurrencies);
+    }
+  }, [isLoading, enabledLanguages, enabledCurrencies, syncWithSettings]);
 
   return (
     <div className="bg-header text-header-foreground">
@@ -15,55 +26,58 @@ const TopBar = () => {
 
         {/* Right side links & switchers */}
         <div className="flex items-center gap-4 ms-auto">
-          {/* Utility links - hidden on mobile */}
-          <nav className="hidden lg:flex items-center gap-4">
-            {userMenuItems.map((item) => (
-              <a
-                key={item.id}
-                href={item.href}
+          {/* Order Tracking link */}
+          {settings?.enableOrderTracking && (
+            <nav className="hidden lg:flex items-center gap-4">
+              <button
+                onClick={openTracking}
                 className="text-header-muted hover:text-header-foreground transition-colors"
               >
-                {t(item.label)}
-              </a>
-            ))}
-          </nav>
+                {lang === 'ar' ? 'تتبع الطلب' : 'Order Tracking'}
+              </button>
+            </nav>
+          )}
 
           {/* Divider */}
-          <span className="hidden lg:block w-px h-3 bg-header-muted/30" />
+          {settings?.enableOrderTracking && (
+            <span className="hidden lg:block w-px h-3 bg-header-muted/30" />
+          )}
 
           {/* Language switcher */}
-          <div className="flex items-center gap-1">
-            {(['en', 'ar'] as LanguageCode[]).map((code) => (
-              <button
-                key={code}
-                onClick={() => setLang(code)}
-                className={`px-1.5 py-0.5 rounded text-[11px] font-medium uppercase transition-colors ${
-                  lang === code
+          {enabledLanguages.length > 0 && (
+            <div className="flex items-center gap-1">
+              {enabledLanguages.map((code) => (
+                <button
+                  key={code}
+                  onClick={() => setLang(code)}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-medium uppercase transition-colors ${lang === code
                     ? 'bg-header-foreground/15 text-header-foreground'
                     : 'text-header-muted hover:text-header-foreground'
-                }`}
-              >
-                {code}
-              </button>
-            ))}
-          </div>
+                    }`}
+                >
+                  {code}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Currency switcher */}
-          <div className="flex items-center gap-1">
-            {(['KWD', 'INR'] as CurrencyCode[]).map((code) => (
-              <button
-                key={code}
-                onClick={() => setCurrency(code)}
-                className={`px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                  currency === code
+          {enabledCurrencies.length > 0 && (
+            <div className="flex items-center gap-1">
+              {enabledCurrencies.map((code) => (
+                <button
+                  key={code}
+                  onClick={() => setCurrency(code)}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors ${currency === code
                     ? 'bg-header-foreground/15 text-header-foreground'
                     : 'text-header-muted hover:text-header-foreground'
-                }`}
-              >
-                {code}
-              </button>
-            ))}
-          </div>
+                    }`}
+                >
+                  {code}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

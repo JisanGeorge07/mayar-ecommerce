@@ -16,7 +16,10 @@ public static class TopCategoryMapper
             ImageAlt = topCategory.ImageAlt,
             TitleEnglish = topCategory.TitleEnglish,
             TitleArabic = topCategory.TitleArabic,
-            IsActive = topCategory.IsActive
+            BadgeEnglish = topCategory.BadgeEnglish,
+            BadgeArabic = topCategory.BadgeArabic,
+            IsActive = topCategory.IsActive,
+            DisplayOrder = topCategory.DisplayOrder
         };
     }
 
@@ -30,7 +33,9 @@ public static class TopCategoryMapper
             ImageAlt = topCategoryDto.ImageAlt,
             TitleEnglish = topCategoryDto.TitleEnglish,
             TitleArabic = topCategoryDto.TitleArabic,
+            BadgeEnglish = topCategoryDto.BadgeEnglish,
+            BadgeArabic = topCategoryDto.BadgeArabic,
+            DisplayOrder=topCategoryDto.DisplayOrder
         };
     }
-
 }

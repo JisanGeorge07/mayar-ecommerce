@@ -1,5 +1,6 @@
 using CloudinaryDotNet;
 using Mayar.Api.Data;
+using Mayar.Api.DTOs;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -98,7 +99,28 @@ builder.Services.AddScoped<IProductSizeService, ProductSizeService>();
 builder.Services.AddScoped<IProductFeatureService, ProductFeatureService>();
 builder.Services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
 builder.Services.AddScoped<IProductCareInstructionService, ProductCareInstructionService>();
+builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IRecentlyViewedService, RecentlyViewedService>();
+builder.Services.AddScoped<INewsLetterService, NewsLetterService>();
+builder.Services.AddScoped<IPromoBannerService, PromoBannerService>();
+builder.Services.AddScoped<IShopByCategoryService, ShopByCategoryService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IContentPageService, ContentPageService>();
+builder.Services.AddScoped<IAboutService, AboutService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ICouponCodeService, CouponCodeService>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+
+// Email Service configuration
+builder.Services.Configure<EmailSettingsDto>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// Register HttpClient for MyFatoorah
+builder.Services.AddHttpClient("MyFatoorah");
 
 builder.Services.AddCors(options =>
 {
@@ -123,6 +145,8 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseStaticFiles();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -18,4 +18,5 @@ public class MiddleCategoryDto
     public string? ButtonTextArabic { get; set; }
     public string? ButtonLink { get; set; }
     public bool IsActive { get; set; }
+    public long? DisplayOrder { get; set; }
 }

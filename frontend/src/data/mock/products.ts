@@ -79,7 +79,7 @@ function mk(d: PD): ProductItem {
     categoryId: d.c, subcategoryId: d.sc, gender: d.g,
     images: imgs, colors, sizes,
     variants: [{ id: `${d.id}-v1`, colorId: colors[0]?.id || '', sku: `MYR-${d.id.toUpperCase()}`, stock: 25, price: d.p, compareAtPrice: d.op, images: [`${d.id}-1`] }],
-    basePrice: d.p, compareAtPrice: d.op,
+    basePriceKWD: d.p, compareAtPriceKWD: d.op,
     rating: d.rt, reviewCount: d.rc,
     isNew: d.nw, isBestSeller: d.bs, isFeatured: d.ft, isOnSale: d.sl,
     inStock: true,

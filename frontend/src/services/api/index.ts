@@ -14,6 +14,13 @@ import { products, getProductBySlug, getRelatedProducts, getBestSellers, getNewA
 import { featuredCategories } from '@/data/mock/featuredCategories';
 import { promoBanners } from '@/data/mock/promotions';
 
+// Export API services
+export { aboutService } from './aboutService';
+export { contactService } from './contactService';
+export { contentPageService } from './contentPageService';
+export { couponService } from './couponService';
+export { settingsService } from './settingsService';
+
 const delay = <T>(data: T, ms = 100): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(data), ms));
 
@@ -37,15 +44,15 @@ function applyFiltersAndSort(items: ProductItem[], filters: ProductFilters, sort
   if (filters.brands?.length) result = result.filter(p => filters.brands!.includes(p.brand.en));
   if (filters.priceRange) {
     const [min, max] = filters.priceRange;
-    result = result.filter(p => p.basePrice >= min && p.basePrice <= max);
+    result = result.filter(p => p.basePriceKWD >= min && p.basePriceKWD <= max);
   }
   if (filters.isOnSale) result = result.filter(p => p.isOnSale);
   if (filters.inStock !== undefined && filters.inStock) result = result.filter(p => p.inStock);
   if (filters.rating) result = result.filter(p => p.rating >= filters.rating!);
 
   switch (sort) {
-    case 'price-asc': result.sort((a, b) => a.basePrice - b.basePrice); break;
-    case 'price-desc': result.sort((a, b) => b.basePrice - a.basePrice); break;
+    case 'price-asc': result.sort((a, b) => a.basePriceKWD - b.basePriceKWD); break;
+    case 'price-desc': result.sort((a, b) => b.basePriceKWD - a.basePriceKWD); break;
     case 'rating': result.sort((a, b) => b.rating - a.rating); break;
     case 'popular': result.sort((a, b) => b.reviewCount - a.reviewCount); break;
     case 'newest':

@@ -24,6 +24,14 @@ export interface UserProfile {
   pinCode?: string;
 }
 
+export interface UpdateProfileRequest {
+  name: string;
+  phoneNumber?: string;
+  address?: string;
+  country?: string;
+  pinCode?: string;
+}
+
 export interface TokenResponse {
   userId: string;
   accessToken: string;

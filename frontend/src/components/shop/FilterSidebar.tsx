@@ -36,6 +36,8 @@ const FilterSidebar = ({ filters, onChange, categories, brands, colors, priceRan
   const activeCount = [
     filters.categoryId,
     filters.isOnSale,
+    filters.isNew,
+    filters.isBestSeller,
     filters.colors?.length,
     filters.sizes?.length,
     filters.brands?.length,
@@ -126,9 +128,8 @@ const FilterSidebar = ({ filters, onChange, categories, brands, colors, priceRan
               <button
                 key={color.id}
                 onClick={() => update({ colors: toggleArray(filters.colors, color.id) })}
-                className={`w-7 h-7 rounded-full border-2 transition-all ${
-                  filters.colors?.includes(color.id) ? 'border-foreground scale-110' : 'border-border'
-                }`}
+                className={`w-7 h-7 rounded-full border-2 transition-all ${filters.colors?.includes(color.id) ? 'border-foreground scale-110' : 'border-border'
+                  }`}
                 style={{ backgroundColor: color.hex }}
                 title={lang === 'ar' ? color.name.ar : color.name.en}
               />
@@ -149,11 +150,10 @@ const FilterSidebar = ({ filters, onChange, categories, brands, colors, priceRan
               <button
                 key={size}
                 onClick={() => update({ sizes: toggleArray(filters.sizes, size.toLowerCase()) })}
-                className={`min-w-[36px] h-8 px-2 text-xs rounded-md border transition-colors ${
-                  filters.sizes?.includes(size.toLowerCase())
+                className={`min-w-[36px] h-8 px-2 text-xs rounded-md border transition-colors ${filters.sizes?.includes(size.toLowerCase())
                     ? 'border-foreground bg-foreground text-background'
                     : 'border-border text-foreground hover:border-foreground'
-                }`}
+                  }`}
               >
                 {size}
               </button>

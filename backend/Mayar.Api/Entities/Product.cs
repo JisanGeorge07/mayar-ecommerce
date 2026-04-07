@@ -20,10 +20,16 @@ public class Product
     public string? FullDescriptionArabic { get; set; }
 
     [Column(TypeName = "decimal(18,3)")]
-    public decimal? BasePrice { get; set; }
+    public decimal? BasePriceKWD { get; set; }
 
     [Column(TypeName = "decimal(18,3)")]
-     public decimal? CompareAtPrice { get; set; }
+    public decimal? CompareAtPriceKWD { get; set; }
+
+    [Column(TypeName = "decimal(18,0)")]
+    public decimal? BasePriceINR { get; set; }
+
+    [Column(TypeName = "decimal(18,0)")]
+    public decimal? CompareAtPriceINR { get; set; }
 
     [Column(TypeName = "decimal(18,1)")]
     public decimal? Rating { get; set; }
@@ -43,8 +49,22 @@ public class Product
     public List<ProductImage> Images { get; set; } = [];
     public List<ProductColor> Colors { get; set; } = [];
     public List<ProductSize> Sizes { get; set; } = [];
+    public List<ProductVariant> Variants { get; set; } = [];
     public List<ProductFeature> Features { get; set; } = [];
     public List<ProductSpecification> Specifications { get; set; } = [];
     public List<ProductCareInstruction> CareInstructions { get; set; } = [];
     public bool IsActive { get; set; } = true;
+    public string? Status { get; set; }
+
+
+    //Metadata
+    public string? MetaTitle { get; set; }
+    public string? CanonicalUrl { get; set; }
+    public string? MetaKeywords { get; set; }
+    public string? MetaDescription { get; set; }
+    public string? OGTitle { get; set; }
+    public string? OGDescription { get; set; }
+    public string? OGImageUrl { get; set; }
+    public string? TwitterTitle { get; set; }
+    public string? TwitterDescription { get; set; }
 }

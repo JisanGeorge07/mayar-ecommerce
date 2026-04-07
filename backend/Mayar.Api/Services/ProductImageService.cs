@@ -35,8 +35,22 @@ public class ProductImageService(AppDbContext context, ICloudinaryService cloudi
         {
             Id = Guid.NewGuid(),
             ProductId = dto.ProductId,
-            ImageAlt = dto.ImageAlt
+            ImageAlt = dto.ImageAlt,
+            IsActive = dto.IsActive
         };
+
+        // Check if this is the first image for this product
+        var existingImagesCount = await context.ProductImages
+            .CountAsync(i => i.ProductId == dto.ProductId);
+
+        // Set as primary if it's the first image or explicitly set as primary
+        entity.IsPrimary = existingImagesCount == 0 || dto.IsPrimary;
+
+        // If setting as primary, ensure no other images are primary for this product
+        if (entity.IsPrimary)
+        {
+            await UnsetPrimaryForProduct(dto.ProductId);
+        }
 
         if (dto.ImageFile != null)
         {
@@ -59,6 +73,15 @@ public class ProductImageService(AppDbContext context, ICloudinaryService cloudi
         }
 
         entity.ImageAlt = dto.ImageAlt;
+
+        // Handle primary image status change
+        if (dto.IsPrimary != entity.IsPrimary && dto.IsPrimary)
+        {
+            // If setting this image as primary, unset other primary images for this product
+            await UnsetPrimaryForProduct(entity.ProductId);
+        }
+
+        entity.IsPrimary = dto.IsPrimary;
 
         if (dto.ImageFile != null)
         {
@@ -83,5 +106,35 @@ public class ProductImageService(AppDbContext context, ICloudinaryService cloudi
         await context.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<bool> SetAsPrimaryAsync(Guid id)
+    {
+        var entity = await context.ProductImages.FindAsync(id);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        // Unset primary for all other images of this product
+        await UnsetPrimaryForProduct(entity.ProductId);
+
+        // Set this image as primary
+        entity.IsPrimary = true;
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private async Task UnsetPrimaryForProduct(Guid productId)
+    {
+        var primaryImages = await context.ProductImages
+            .Where(i => i.ProductId == productId && i.IsPrimary)
+            .ToListAsync();
+
+        foreach (var image in primaryImages)
+        {
+            image.IsPrimary = false;
+        }
     }
 }

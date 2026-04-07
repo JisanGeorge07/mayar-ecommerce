@@ -35,8 +35,7 @@ public class ProductSizeService(AppDbContext context) : IProductSizeService
         {
             Id = Guid.NewGuid(),
             ProductId = dto.ProductId,
-            Label = dto.Label,
-            Stock = dto.Stock
+            Label = dto.Label
         };
 
         context.ProductSizes.Add(entity);
@@ -54,7 +53,6 @@ public class ProductSizeService(AppDbContext context) : IProductSizeService
         }
 
         entity.Label = dto.Label;
-        entity.Stock = dto.Stock;
 
         await context.SaveChangesAsync();
 

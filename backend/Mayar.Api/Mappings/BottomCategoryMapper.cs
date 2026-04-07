@@ -16,7 +16,8 @@ public static class BottomCategoryMapper
             Slug = bottomCategory.Slug,
             TitleEnglish = bottomCategory.TitleEnglish,
             TitleArabic = bottomCategory.TitleArabic,
-            IsActive = bottomCategory.IsActive
+            IsActive = bottomCategory.IsActive,
+            DisplayOrder = bottomCategory.DisplayOrder
         };
     }
     public static BottomCategory ToBottomCategoryEntity(this BottomCategoryDto bottomCategoryDto)
@@ -29,6 +30,7 @@ public static class BottomCategoryMapper
             Slug = bottomCategoryDto.Slug,
             TitleEnglish = bottomCategoryDto.TitleEnglish,
             TitleArabic = bottomCategoryDto.TitleArabic,
+            DisplayOrder = bottomCategoryDto.DisplayOrder
         };
     }
 }

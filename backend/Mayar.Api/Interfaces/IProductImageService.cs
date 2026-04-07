@@ -10,4 +10,5 @@ public interface IProductImageService
     Task<ProductImageDto> CreateAsync(ProductImageDto dto);
     Task<ProductImageDto?> UpdateAsync(Guid id, ProductImageDto dto);
     Task<bool> DeleteAsync(Guid id);
+    Task<bool> SetAsPrimaryAsync(Guid id);
 }

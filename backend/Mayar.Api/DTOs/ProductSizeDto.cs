@@ -7,6 +7,5 @@ public class ProductSizeDto
     public Guid Id { get; set; }
     public Guid ProductId { get; set; }
     public string? Label { get; set; }
-    public int? Stock { get; set; }
     public bool IsActive { get; set; }
 }

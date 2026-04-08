@@ -152,5 +152,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Health check endpoint
+app.MapGet("/", () => Results.Ok(new
+{
+    message = "Mayar API is running",
+    status = "healthy",
+    timestamp = DateTime.UtcNow
+}));
 
 app.Run();

@@ -4,7 +4,7 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useLocale } from '@/hooks/useLocale';
 import { getOrderHistory } from '@/services/api/orderService';
-import { loadAddresses } from '@/data/mock/accountData';
+import { addressService } from '@/services/api/addressService';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useEffect, useState } from 'react';
 
@@ -20,13 +20,14 @@ const AccountDashboard = ({ onNavigate }: Props) => {
   const { lang } = useLocale();
   const t = (en: string, ar: string) => lang === 'ar' ? ar : en;
   const [orderCount, setOrderCount] = useState(0);
-  const addressCount = loadAddresses().length;
+  const [addressCount, setAddressCount] = useState(0);
 
   const enableWishlist = settings?.enableWishlist ?? true;
   const enableOrderTracking = settings?.enableOrderTracking ?? false;
 
   useEffect(() => {
     getOrderHistory().then(o => setOrderCount(o.length));
+    addressService.getAddresses().then(a => setAddressCount(a.length)).catch(() => setAddressCount(0));
   }, []);
 
   const allCards = [

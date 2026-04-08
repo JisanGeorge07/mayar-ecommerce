@@ -49,8 +49,21 @@ const SignupPage = () => {
     const e: FormErrors = {};
     if (!form.name.trim()) e.name = isAr ? 'الاسم مطلوب' : 'Name is required';
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) e.email = isAr ? 'بريد إلكتروني غير صالح' : 'Invalid email';
-    if (!form.password || form.password.length < 6) e.password = isAr ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters';
-    if (form.password !== form.confirmPassword) e.confirmPassword = isAr ? 'كلمات المرور غير متطابقة' : 'Passwords do not match';
+    if (!form.password) {
+      e.password = isAr ? 'كلمة المرور مطلوبة' : 'Password is required';
+    } else if (form.password.length < 8) {
+      e.password = isAr ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' : 'Password must be at least 8 characters';
+    } else if (!/[a-zA-Z]/.test(form.password)) {
+      e.password = isAr ? 'كلمة المرور يجب أن تحتوي على حرف واحد على الأقل' : 'Password must contain at least one letter';
+    } else if (!/\d/.test(form.password)) {
+      e.password = isAr ? 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل' : 'Password must contain at least one number';
+    }
+
+    if (!form.confirmPassword) {
+      e.confirmPassword = isAr ? 'يرجى تأكيد كلمة المرور' : 'Please confirm your password';
+    } else if (form.password !== form.confirmPassword) {
+      e.confirmPassword = isAr ? 'كلمات المرور غير متطابقة' : 'Passwords do not match';
+    }
     if (!form.address.trim()) e.address = isAr ? 'العنوان مطلوب' : 'Address is required';
     if (!form.country.trim()) e.country = isAr ? 'الدولة مطلوبة' : 'Country is required';
     if (!form.pinCode.trim()) e.pinCode = isAr ? 'الرمز البريدي مطلوب' : 'Pin code is required';
@@ -83,12 +96,12 @@ const SignupPage = () => {
   const fields: { key: keyof typeof form; label: string; labelAr: string; type: string; placeholder: string; dir?: string; maxLength?: number; required?: boolean }[] = [
     { key: 'name', label: 'Full Name', labelAr: 'الاسم الكامل', type: 'text', placeholder: 'John Doe', maxLength: 100, required: true },
     { key: 'email', label: 'Email', labelAr: 'البريد الإلكتروني', type: 'email', placeholder: 'john@example.com', dir: 'ltr', maxLength: 255, required: true },
-    { key: 'password', label: 'Password', labelAr: 'كلمة المرور', type: 'password', placeholder: '••••••••', dir: 'ltr', maxLength: 100, required: true },
-    { key: 'confirmPassword', label: 'Confirm Password', labelAr: 'تأكيد كلمة المرور', type: 'password', placeholder: '••••••••', dir: 'ltr', maxLength: 100, required: true },
     { key: 'phoneNumber', label: 'Phone Number (Optional)', labelAr: 'رقم الهاتف (اختياري)', type: 'tel', placeholder: '+965 XXXX XXXX', dir: 'ltr', maxLength: 20, required: false },
     { key: 'address', label: 'Full Address', labelAr: 'العنوان الكامل', type: 'text', placeholder: 'Block 5, Street 10, Kuwait City', maxLength: 300, required: true },
     { key: 'country', label: 'Country', labelAr: 'الدولة', type: 'text', placeholder: 'Kuwait', maxLength: 100, required: true },
     { key: 'pinCode', label: 'Pin Code', labelAr: 'الرمز البريدي', type: 'text', placeholder: '12345', dir: 'ltr', maxLength: 10, required: true },
+    { key: 'password', label: 'Password', labelAr: 'كلمة المرور', type: 'password', placeholder: '••••••••', dir: 'ltr', maxLength: 100, required: true },
+    { key: 'confirmPassword', label: 'Confirm Password', labelAr: 'تأكيد كلمة المرور', type: 'password', placeholder: '••••••••', dir: 'ltr', maxLength: 100, required: true }
   ];
 
   return (
@@ -146,8 +159,8 @@ const SignupPage = () => {
                 const toggleVisibility = isPasswordField
                   ? () => setShowPassword(!showPassword)
                   : isConfirmPasswordField
-                  ? () => setShowConfirmPassword(!showConfirmPassword)
-                  : undefined;
+                    ? () => setShowConfirmPassword(!showConfirmPassword)
+                    : undefined;
 
                 return (
                   <div key={f.key}>
@@ -175,6 +188,9 @@ const SignupPage = () => {
                       )}
                     </div>
                     {errors[f.key] && <p className="text-destructive text-xs mt-0.5">{errors[f.key]}</p>}
+                    {isPasswordField && !errors.password && form.password.length > 0 && form.password.length < 8 && (
+                      <p className="text-muted-foreground text-xs mt-0.5">{isAr ? 'الحد الأدنى 8 أحرف، حرف واحد، رقم واحد' : 'Min 8 characters, 1 letter, 1 number'}</p>
+                    )}
                   </div>
                 );
               })}

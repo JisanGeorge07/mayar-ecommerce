@@ -3,7 +3,7 @@ import type { ProductItem, ProductImage, ProductColor, ProductSize, ProductFeatu
 
 const STANDARD_SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL', 'OS'];
 
-export const sortSizes = (a: { label: string }, b: { label: string }) => {
+export const sortSizes = (a: { label?: string }, b: { label?: string }) => {
   const labelA = a.label?.trim().toUpperCase() || '';
   const labelB = b.label?.trim().toUpperCase() || '';
 
@@ -11,7 +11,7 @@ export const sortSizes = (a: { label: string }, b: { label: string }) => {
   const numB = parseFloat(labelB);
 
   // If both are purely numbers (or strings that are valid numbers), sort numerically
-  if (!isNaN(numA) && !isNaN(numB) && labelA == numA.toString() && labelB == numB.toString()) {
+  if (!isNaN(numA) && !isNaN(numB) && labelA === numA.toString() && labelB === numB.toString()) {
     return numA - numB;
   }
 

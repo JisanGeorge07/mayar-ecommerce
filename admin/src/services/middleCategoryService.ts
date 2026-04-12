@@ -11,6 +11,9 @@ export interface MiddleCategoryCreateInput {
   topCategoryId: string;
   titleEnglish: string;
   titleArabic: string;
+  displayOrder?: number;
+  slug?: string;
+  isActive?: boolean;
 }
 
 export interface MiddleCategoryUpdateInput {
@@ -42,6 +45,15 @@ export const middleCategoryService = {
     formData.append("topCategoryId", data.topCategoryId);
     formData.append("titleEnglish", data.titleEnglish);
     formData.append("titleArabic", data.titleArabic);
+    if (data.slug) {
+      formData.append("slug", data.slug);
+    }
+    if (data.displayOrder !== undefined) {
+      formData.append("displayOrder", data.displayOrder.toString());
+    }
+    if (data.isActive !== undefined) {
+      formData.append("isActive", data.isActive.toString());
+    }
 
     const res = await api.post<ApiResponse<MiddleCategory>>("/category/middle/create", formData, {
       headers: { "Content-Type": "multipart/form-data" },

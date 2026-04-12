@@ -9,202 +9,147 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Pencil, Ban } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateSlug } from '@/utils/slug';
 import type { TopCategory, MiddleCategory, BottomCategory } from '@/types';
 
-interface FormState {
-  topCategoryId: string;
-  middleCategoryId: string;
-  titleEnglish: string;
-  titleArabic: string;
-  slug: string;
-  displayOrder: number;
-  isActive: boolean;
-}
-
-const emptyForm: FormState = {
+const emptyForm = {
   topCategoryId: '',
   middleCategoryId: '',
-  titleEnglish: '',
-  titleArabic: '',
+  nameEnglish: '',
+  nameArabic: '',
   slug: '',
+  status: 'active' as 'active' | 'inactive',
+  description: '',
+  attribute_template: '',
   displayOrder: 0,
-  isActive: true,
 };
 
 export default function ProductTypesPage() {
-  const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
-  const [middleCategories, setMiddleCategories] = useState<MiddleCategory[]>([]);
-  const [bottomCategories, setBottomCategories] = useState<BottomCategory[]>([]);
+  const [categories, setCategories] = useState<TopCategory[]>([]);
+  const [subcategories, setSubcategories] = useState<MiddleCategory[]>([]);
+  const [productTypes, setProductTypes] = useState<BottomCategory[]>([]);
   const [catFilter, setCatFilter] = useState('all');
   const [subFilter, setSubFilter] = useState('all');
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>(emptyForm);
-  const [loading, setLoading] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<BottomCategory | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [formCatId, setFormCatId] = useState('');
 
   const load = async () => {
     try {
-      const [tops, middles, bottoms] = await Promise.all([
+      const [cats, subs, pts] = await Promise.all([
         topCategoryService.getAll(),
         middleCategoryService.getAll(),
         bottomCategoryService.getAll(),
       ]);
-      setTopCategories(tops);
-      setMiddleCategories(middles);
-      setBottomCategories(bottoms);
-    } catch (error) {
+      setCategories(cats);
+      setSubcategories(subs);
+      setProductTypes(pts);
+    } catch {
       toast.error('Failed to load data');
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
-  // Filter middle categories based on selected top category filter
-  const filteredMiddleCategories = catFilter === 'all'
-    ? middleCategories
-    : middleCategories.filter(m => m.topCategoryId === catFilter);
+  const filteredSubs = catFilter === 'all'
+    ? subcategories
+    : subcategories.filter(s => s.topCategoryId === catFilter);
 
-  // Filter bottom categories based on filters
-  const filtered = bottomCategories.filter(bc => {
-    if (subFilter !== 'all') return bc.middleCategoryId === subFilter;
-    if (catFilter !== 'all') return bc.topCategoryId === catFilter;
+  const filtered = productTypes.filter(pt => {
+    if (subFilter !== 'all') return pt.middleCategoryId === subFilter;
+    if (catFilter !== 'all') return filteredSubs.some(s => s.id === pt.middleCategoryId);
     return true;
   });
 
-  // Get names for display
-  const getTopCategoryName = (id: string) => {
-    const cat = topCategories.find(c => c.id === id);
-    return cat?.titleEnglish || '';
+  const getSubName = (id: string) => subcategories.find(s => s.id === id)?.titleEnglish || '';
+  const getCatForSub = (subId: string) => {
+    const sub = subcategories.find(s => s.id === subId);
+    return sub ? categories.find(c => c.id === sub.topCategoryId)?.titleEnglish || '' : '';
   };
-
-  const getMiddleCategoryName = (id: string) => {
-    const cat = middleCategories.find(c => c.id === id);
-    return cat?.titleEnglish || '';
-  };
-
-  // Filter middle categories in form based on selected top category
-  const formMiddleCategories = form.topCategoryId
-    ? middleCategories.filter(m => m.topCategoryId === form.topCategoryId)
-    : middleCategories;
 
   const openAdd = () => {
     setEditId(null);
     setForm(emptyForm);
+    setFormCatId('');
     setOpen(true);
   };
 
-  const openEdit = (bc: BottomCategory) => {
-    setEditId(bc.id);
+  const openEdit = (pt: BottomCategory) => {
+    setEditId(pt.id);
+    const sub = subcategories.find(s => s.id === pt.middleCategoryId);
+    setFormCatId(sub?.topCategoryId || '');
+
     setForm({
-      topCategoryId: bc.topCategoryId,
-      middleCategoryId: bc.middleCategoryId,
-      titleEnglish: bc.titleEnglish || '',
-      titleArabic: bc.titleArabic || '',
-      slug: bc.slug || '',
-      displayOrder: bc.displayOrder || 0,
-      isActive: bc.isActive,
+      topCategoryId: pt.topCategoryId,
+      middleCategoryId: pt.middleCategoryId,
+      nameEnglish: pt.titleEnglish,
+      nameArabic: pt.titleArabic,
+      slug: pt.slug || '',
+      status: pt.isActive ? 'active' : 'inactive',
+      description: pt.description || '',
+      attribute_template: pt.attributeTemplate || '',
+      displayOrder: pt.displayOrder || 0
     });
+
     setOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.titleEnglish.trim() || !form.titleArabic.trim()) {
-      toast.error('Title English and Title Arabic are required');
-      return;
-    }
-    if (!form.topCategoryId || !form.middleCategoryId) {
-      toast.error('Category and SubCategory are required');
+    if (!form.nameEnglish.trim() || !form.nameArabic.trim() || !form.middleCategoryId) {
+      toast.error('Name and subcategory are required');
       return;
     }
 
-    setLoading(true);
+    const slug = form.slug || generateSlug(form.nameEnglish);
+
     try {
       if (editId) {
-        const success = await bottomCategoryService.update(editId, {
-          topCategoryId: form.topCategoryId,
+        await bottomCategoryService.update(editId, {
+          topCategoryId: formCatId,
           middleCategoryId: form.middleCategoryId,
-          titleEnglish: form.titleEnglish,
-          titleArabic: form.titleArabic,
-          slug: form.slug,
+          titleEnglish: form.nameEnglish,
+          titleArabic: form.nameArabic,
+          slug,
+          isActive: form.status === 'active',
+          description: form.description,
+          attributeTemplate: form.attribute_template,
           displayOrder: form.displayOrder,
-          isActive: form.isActive,
         });
-        if (success) {
-          toast.success('Product type updated');
-        } else {
-          toast.error('Failed to update product type');
-        }
+        toast.success('Product type updated');
       } else {
         await bottomCategoryService.create({
-          topCategoryId: form.topCategoryId,
+          topCategoryId: formCatId,
           middleCategoryId: form.middleCategoryId,
-          titleEnglish: form.titleEnglish,
-          titleArabic: form.titleArabic,
+          titleEnglish: form.nameEnglish,
+          titleArabic: form.nameArabic,
+          slug,
+          isActive: form.status === 'active',
+          description: form.description,
+          attributeTemplate: form.attribute_template,
+          displayOrder: form.displayOrder,
         });
         toast.success('Product type created');
       }
+
       setOpen(false);
       load();
-    } catch (error) {
-      toast.error('An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleStatus = async (id: string) => {
-    try {
-      const success = await bottomCategoryService.toggleStatus(id);
-      if (success) {
-        toast.success('Status toggled successfully');
-        load();
-      } else {
-        toast.error('Failed to toggle status');
-      }
     } catch {
-      toast.error('An error occurred');
+      toast.error('Something went wrong');
     }
   };
 
-  const openDeleteDialog = (bc: BottomCategory) => {
-    setDeleteTarget(bc);
-    setDeleteDialogOpen(true);
+  const handleDeactivate = async (id: string) => {
+    await bottomCategoryService.toggleStatus(id);
+    toast.success('Product type deactivated');
+    load();
   };
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-
-    try {
-      const success = await bottomCategoryService.delete(deleteTarget.id);
-      if (success) {
-        toast.success('Product type deleted successfully');
-        load();
-      } else {
-        toast.error('Failed to delete product type');
-      }
-    } catch {
-      toast.error('An error occurred');
-    } finally {
-      setDeleteDialogOpen(false);
-      setDeleteTarget(null);
-    }
-  };
+  const formSubs = formCatId
+    ? subcategories.filter(s => s.topCategoryId === formCatId)
+    : subcategories;
 
   return (
     <AdminLayout>
@@ -212,28 +157,28 @@ export default function ProductTypesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Product Types</h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage product types (bottom level categories)</p>
+            <p className="text-sm text-muted-foreground mt-1">Manage product types under each subcategory</p>
           </div>
           <div className="flex items-center gap-3">
             <Select value={catFilter} onValueChange={v => { setCatFilter(v); setSubFilter('all'); }}>
               <SelectTrigger className="w-44"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {topCategories.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.titleEnglish}</SelectItem>
-                ))}
+                {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.titleEnglish}</SelectItem>)}
               </SelectContent>
             </Select>
+
             <Select value={subFilter} onValueChange={setSubFilter}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="SubCategory" /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Subcategory" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All SubCategories</SelectItem>
-                {filteredMiddleCategories.map(m => (
-                  <SelectItem key={m.id} value={m.id}>{m.titleEnglish}</SelectItem>
-                ))}
+                <SelectItem value="all">All Subcategories</SelectItem>
+                {filteredSubs.map(s => <SelectItem key={s.id} value={s.id}>{s.titleEnglish}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={openAdd}><Plus className="h-4 w-4 mr-1" /> Add Product Type</Button>
+
+            <Button size="sm" onClick={openAdd}>
+              <Plus className="h-4 w-4 mr-1" /> Add Product Type
+            </Button>
           </div>
         </div>
 
@@ -241,181 +186,123 @@ export default function ProductTypesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title English</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title Arabic</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name (EN)</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name (AR)</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">SubCategory</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subcategory</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Slug</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-border">
-              {filtered.map(bc => (
-                <tr key={bc.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium text-foreground">{bc.titleEnglish}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{bc.titleArabic}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{getTopCategoryName(bc.topCategoryId)}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{getMiddleCategoryName(bc.middleCategoryId)}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{bc.slug}</td>
+              {filtered.map(pt => (
+                <tr key={pt.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">{pt.titleEnglish}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{pt.titleArabic}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{getCatForSub(pt.middleCategoryId)}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{getSubName(pt.middleCategoryId)}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground font-mono">{pt.slug}</td>
                   <td className="px-6 py-4">
-                    <Badge variant={bc.isActive ? 'default' : 'secondary'} className="text-xs">
-                      {bc.isActive ? 'Active' : 'Inactive'}
+                    <Badge variant={pt.isActive ? 'default' : 'secondary'} className="capitalize text-xs">
+                      {pt.isActive ? 'active' : 'inactive'}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(bc)} title="Edit">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(pt)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleToggleStatus(bc.id)}
-                        title={bc.isActive ? 'Deactivate' : 'Activate'}
-                      >
-                        {bc.isActive ? (
-                          <ToggleRight className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <ToggleLeft className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => openDeleteDialog(bc)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      {pt.isActive && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeactivate(pt.id)}>
+                          <Ban className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-6 py-12 text-center text-sm text-muted-foreground">No product types found</td></tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Add/Edit Dialog */}
+      {/* Dialog SAME UI */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editId ? 'Edit Product Type' : 'Add Product Type'}</DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Category <span className="text-destructive">*</span></Label>
-              <Select
-                value={form.topCategoryId}
-                onValueChange={v => setForm(f => ({ ...f, topCategoryId: v, middleCategoryId: '' }))}
-              >
+              <Label>Category</Label>
+              <Select value={formCatId} onValueChange={v => { setFormCatId(v); setForm(f => ({ ...f, middleCategoryId: '' })); }}>
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
-                  {topCategories.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.titleEnglish}</SelectItem>
-                  ))}
+                  {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.titleEnglish}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-1.5">
-              <Label>SubCategory <span className="text-destructive">*</span></Label>
-              <Select
-                value={form.middleCategoryId}
-                onValueChange={v => setForm(f => ({ ...f, middleCategoryId: v }))}
-                disabled={!form.topCategoryId}
-              >
-                <SelectTrigger><SelectValue placeholder={form.topCategoryId ? "Select subcategory" : "Select category first"} /></SelectTrigger>
+              <Label>Subcategory</Label>
+              <Select value={form.middleCategoryId} onValueChange={v => setForm(f => ({ ...f, middleCategoryId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select subcategory" /></SelectTrigger>
                 <SelectContent>
-                  {formMiddleCategories.map(m => (
-                    <SelectItem key={m.id} value={m.id}>{m.titleEnglish}</SelectItem>
-                  ))}
+                  {formSubs.map(s => <SelectItem key={s.id} value={s.id}>{s.titleEnglish}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Product Type Name (English)</Label>
+              <Input value={form.nameEnglish} onChange={e => setForm(f => ({ ...f, nameEnglish: e.target.value, slug: generateSlug(e.target.value) }))} placeholder='e.g. T-Shirt' />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Product Type Name (Arabic)</Label>
+              <Input value={form.nameArabic} onChange={e => setForm(f => ({ ...f, nameArabic: e.target.value }))} dir="rtl" placeholder='e.g. تي شيرت' />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Slug</Label>
+              <Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v as any }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Title English <span className="text-destructive">*</span></Label>
-              <Input
-                value={form.titleEnglish}
-                onChange={e => setForm(f => ({ ...f, titleEnglish: e.target.value }))}
-                placeholder="e.g. T-Shirt"
-              />
+              <Label>Display Order</Label>
+              <Input type="number" value={form.displayOrder} onChange={e => setForm(f => ({ ...f, displayOrder: Number(e.target.value) }))} />
             </div>
+
+            {/* <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
+
             <div className="space-y-1.5">
-              <Label>Title Arabic <span className="text-destructive">*</span></Label>
-              <Input
-                value={form.titleArabic}
-                onChange={e => setForm(f => ({ ...f, titleArabic: e.target.value }))}
-                placeholder="e.g. تي شيرت"
-                dir="rtl"
-              />
-            </div>
-            {editId && (
-              <>
-                <div className="space-y-1.5">
-                  <Label>Slug</Label>
-                  <Input
-                    value={form.slug}
-                    onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
-                    placeholder="auto-generated-slug"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Display Order</Label>
-                  <Input
-                    type="number"
-                    value={form.displayOrder}
-                    onChange={e => setForm(f => ({ ...f, displayOrder: parseInt(e.target.value) || 0 }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <Select
-                    value={form.isActive ? 'active' : 'inactive'}
-                    onValueChange={v => setForm(f => ({ ...f, isActive: v === 'active' }))}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
+              <Label>Attribute Template</Label>
+              <Input value={form.attribute_template} onChange={e => setForm(f => ({ ...f, attribute_template: e.target.value }))} />
+            </div> */}
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={loading}>
-              {loading ? 'Saving...' : editId ? 'Update' : 'Save'}
-            </Button>
+            <Button onClick={handleSave}>{editId ? 'Update' : 'Save'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the product type "{deleteTarget?.titleEnglish}".
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AdminLayout>
   );
 }

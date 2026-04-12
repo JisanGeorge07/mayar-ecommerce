@@ -23,7 +23,7 @@ export default function AboutUsPage() {
     aboutUsService.getData().then(d => { setForm(d); setLoading(false); });
   }, []);
 
-  if (loading || !form) return <AdminLayout><div className="p-8 text-muted-foreground">Loading...</div></AdminLayout>;
+  if (loading || !form) return <AdminLayout></AdminLayout>;
 
   const set = <K extends keyof AboutUsPageData>(k: K, v: AboutUsPageData[K]) =>
     setForm(prev => prev ? { ...prev, [k]: v } : prev);

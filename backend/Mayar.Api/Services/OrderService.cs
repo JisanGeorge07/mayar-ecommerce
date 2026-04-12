@@ -33,10 +33,40 @@ public class OrderService : IOrderService
 
         var order = dto.ToEntity(userId, sessionId, orderNumber, trackingId);
 
+        // Fetch products and variants to ensure accurate images
+        var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
+        var products = await _context.Products
+            .Include(p => p.Images)
+            .Include(p => p.Variants)
+            .Where(p => productIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id);
+
         // Add order items
         foreach (var itemDto in dto.Items)
         {
             var orderItem = itemDto.ToEntity(order.Id);
+            
+            // Re-evaluate image robustly from database
+            if (products.TryGetValue(itemDto.ProductId, out var product))
+            {
+                var primaryImage = product.Images
+                    .Where(i => i.IsActive)
+                    .OrderByDescending(i => i.IsPrimary)
+                    .ThenBy(i => i.Id)
+                    .FirstOrDefault()?.ImageUrl;
+
+                string? variantImage = null;
+                if (itemDto.VariantId.HasValue)
+                {
+                    var variant = product.Variants.FirstOrDefault(v => v.Id == itemDto.VariantId.Value);
+                    variantImage = variant?.ImageUrl;
+                }
+
+                orderItem.ProductImageUrl = !string.IsNullOrEmpty(variantImage) 
+                    ? variantImage 
+                    : (!string.IsNullOrEmpty(primaryImage) ? primaryImage : itemDto.Image);
+            }
+
             order.OrderItems.Add(orderItem);
         }
 

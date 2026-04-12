@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Eye, Trash2, Package } from 'lucide-react';
+import { Plus, Pencil, Eye, Trash2, Package, Archive } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { Category, Subcategory, ProductType, Product } from '@/types';
@@ -24,7 +24,7 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const load = async () => {
-    setLoading(true);
+    // setLoading(true);
     try {
       const [cats, subs, pts, prods] = await Promise.all([
         categoryService.getCategories(),
@@ -39,9 +39,10 @@ export default function ProductsPage() {
     } catch (error) {
       console.error('Failed to load data:', error);
       toast.error('Failed to load products');
-    } finally {
-      setLoading(false);
-    }
+    } 
+    // finally {
+    //   setLoading(false);
+    // }
   };
 
   useEffect(() => { load(); }, []);
@@ -78,7 +79,7 @@ export default function ProductsPage() {
   const getSubName = (id: string) => subcategories.find(s => s.id === id)?.name || '-';
   const getPtName = (id: string) => productTypes.find(p => p.id === id)?.name || '-';
 
-  const statusColor = (s: string) => s === 'active' ? 'default' : 'secondary';
+  const statusColor = (s: string) => s === 'active' ? 'default' : s === 'archived' ? 'outline' : 'secondary';
 
   // Action handlers
   const handleEdit = (productId: string) => {
@@ -90,19 +91,19 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Are you sure you want to archive this product?')) return;
 
     try {
       const success = await productService.deleteProduct(productId);
       if (success) {
-        toast.success('Product deleted successfully');
+        toast.success('Product archived successfully');
         load(); // Refresh the list
       } else {
-        toast.error('Failed to delete product');
+        toast.error('Failed to archive product');
       }
     } catch (error) {
-      console.error('Failed to delete product:', error);
-      toast.error('Failed to delete product');
+      console.error('Failed to archive product:', error);
+      toast.error('Failed to archive product');
     }
   };
 
@@ -113,7 +114,7 @@ export default function ProductsPage() {
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">All Products</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Manage your product catalog ({products.length} total)
+              Manage your product catalog
             </p>
           </div>
           <Link to="/products/new">
@@ -124,7 +125,7 @@ export default function ProductsPage() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
           <Input
-            placeholder="Search by name or brand..."
+            placeholder="Search products..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-56"
@@ -156,17 +157,20 @@ export default function ProductsPage() {
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Loading state */}
-        {loading ? (
-          <div className="rounded-lg border border-border bg-card p-12 shadow-sm text-center">
-            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-sm text-muted-foreground">Loading products...</p>
-          </div>
-        ) : filtered.length === 0 ? (
+        {
+        // loading ? (
+        //   <div className="rounded-lg border border-border bg-card p-12 shadow-sm text-center">
+        //     <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+        //     <p className="text-sm text-muted-foreground">Loading products...</p>
+        //   </div>
+        // ) :
+         filtered.length === 0 ? (
           /* Empty state */
           <div className="rounded-lg border border-border bg-card p-12 shadow-sm text-center">
             <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -259,9 +263,9 @@ export default function ProductsPage() {
                           size="icon"
                           className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={() => handleDelete(p.id)}
-                          title="Delete product"
+                          title="Archive product"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Archive className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </td>

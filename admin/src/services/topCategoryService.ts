@@ -10,18 +10,16 @@ interface ApiResponse<T> {
 export interface TopCategoryCreateInput {
   titleEnglish: string;
   titleArabic: string;
-  imageFile?: File;
-  imageAlt?: string;
   badgeEnglish?: string;
   badgeArabic?: string;
+  slug?: string;
+  displayOrder?: number;
+  isActive?: boolean;
 }
 
 export interface TopCategoryUpdateInput {
   titleEnglish?: string;
   titleArabic?: string;
-  imageFile?: File;
-  imageUrl?: string;
-  imageAlt?: string;
   badgeEnglish?: string;
   badgeArabic?: string;
   slug?: string;
@@ -48,17 +46,20 @@ export const topCategoryService = {
     const formData = new FormData();
     formData.append("titleEnglish", data.titleEnglish);
     formData.append("titleArabic", data.titleArabic);
-    if (data.imageFile) {
-      formData.append("imageFile", data.imageFile);
-    }
-    if (data.imageAlt) {
-      formData.append("imageAlt", data.imageAlt);
+    if (data.slug) {
+      formData.append("slug", data.slug);
     }
     if (data.badgeEnglish) {
       formData.append("badgeEnglish", data.badgeEnglish);
     }
     if (data.badgeArabic) {
       formData.append("badgeArabic", data.badgeArabic);
+    }
+    if (data.displayOrder !== undefined) {
+      formData.append("displayOrder", data.displayOrder.toString());
+    }
+    if (data.isActive !== undefined) {
+      formData.append("isActive", data.isActive.toString());
     }
 
     const res = await api.post<ApiResponse<TopCategory>>("/category/top/create", formData, {
@@ -74,15 +75,6 @@ export const topCategoryService = {
     }
     if (data.titleArabic !== undefined) {
       formData.append("titleArabic", data.titleArabic);
-    }
-    if (data.imageFile) {
-      formData.append("imageFile", data.imageFile);
-    }
-    if (data.imageUrl !== undefined) {
-      formData.append("imageUrl", data.imageUrl);
-    }
-    if (data.imageAlt !== undefined) {
-      formData.append("imageAlt", data.imageAlt);
     }
     if (data.badgeEnglish !== undefined) {
       formData.append("badgeEnglish", data.badgeEnglish);

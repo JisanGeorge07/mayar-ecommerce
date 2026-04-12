@@ -181,10 +181,15 @@ public static class ProductMapper
         {
             Id = entity.Id,
             ProductId = entity.ProductId,
-            IconName = entity.IconName,
-            LabelEnglish = entity.LabelEnglish,
-            LabelArabic = entity.LabelArabic,
-            IsActive = entity.IsActive
+            TrustBadgeId = entity.TrustBadgeId,
+            IsActive = entity.IsActive,
+            // Populate from TrustBadge navigation property if loaded
+            Key = entity.TrustBadge?.Key,
+            LabelEnglish = entity.TrustBadge?.LabelEnglish,
+            LabelArabic = entity.TrustBadge?.LabelArabic,
+            DescriptionEnglish = entity.TrustBadge?.DescriptionEnglish,
+            DescriptionArabic = entity.TrustBadge?.DescriptionArabic,
+            IconName = entity.TrustBadge?.IconName,
         };
     }
 
@@ -194,9 +199,8 @@ public static class ProductMapper
         {
             Id = dto.Id,
             ProductId = dto.ProductId,
-            IconName = dto.IconName,
-            LabelEnglish = dto.LabelEnglish,
-            LabelArabic = dto.LabelArabic,
+            TrustBadgeId = dto.TrustBadgeId,
+            IsActive = dto.IsActive
         };
     }
 

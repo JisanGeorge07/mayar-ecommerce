@@ -54,7 +54,7 @@ const NAV_SECTIONS = [
 ];
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

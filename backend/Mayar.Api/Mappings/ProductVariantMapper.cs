@@ -21,7 +21,8 @@ public static class ProductVariantMapper
             InStock = entity.InStock,
             IsDefault = entity.IsDefault,
             Color = entity.ProductColor?.ToProductColorDto(),
-            Size = entity.ProductSize?.ToProductSizeDto()
+            Size = entity.ProductSize?.ToProductSizeDto(),
+            ImageUrl = entity.ImageUrl
         };
     }
 
@@ -39,7 +40,8 @@ public static class ProductVariantMapper
             CompareAtPriceINR = dto.CompareAtPriceINR,
             StockQuantity = dto.StockQuantity,
             InStock = dto.InStock,
-            IsDefault = dto.IsDefault
+            IsDefault = dto.IsDefault,
+            ImageUrl = dto.ImageUrl
         };
     }
 }

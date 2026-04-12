@@ -16,12 +16,17 @@ const ProductCard = ({ product, compact }: ProductCardProps) => {
   const { t, formatPrice, getPrice } = useLocale();
   const { settings } = useSettings();
   const { isInWishlist, toggleWishlist } = useWishlist();
+
+  // Find default variant for pricing, image, and wishlist
+  const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
+
+  // Use default variant image if available, otherwise fall back to product images
+  const defaultVariantImageUrl = defaultVariant?.imageUrl;
   const primaryImg = product.images.find(i => i.isPrimary) || product.images[0];
+  const displayImageUrl = defaultVariantImageUrl || primaryImg?.url || '/placeholder.png';
+  const displayImageAlt = primaryImg ? t(primaryImg.alt) : t(product.name);
 
   const [wishlistPopupOpen, setWishlistPopupOpen] = useState(false);
-
-  // Find default variant for pricing and wishlist
-  const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
 
   const liked = isInWishlist(product.id, defaultVariant?.id);
 
@@ -56,8 +61,8 @@ const ProductCard = ({ product, compact }: ProductCardProps) => {
         {/* Image */}
         <Link to={`/product/${product.slug}`} className="block relative aspect-[3/4] overflow-hidden bg-secondary">
           <img
-            src={primaryImg?.url}
-            alt={primaryImg ? t(primaryImg.alt) : t(product.name)}
+            src={displayImageUrl}
+            alt={displayImageAlt}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
@@ -98,7 +103,7 @@ const ProductCard = ({ product, compact }: ProductCardProps) => {
           </Link>
 
           {/* Rating */}
-          <div className="flex items-center gap-1 mb-1.5">
+          <div className="flex items-center gap-1 mb-1.5 mt-6">
             <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map(star => (
                 <Star
@@ -121,7 +126,7 @@ const ProductCard = ({ product, compact }: ProductCardProps) => {
 
           {/* Color swatches */}
           {product.colors.length > 0 && (
-            <div className="flex items-center gap-1 mt-2">
+            <div className="flex items-center gap-1 mt-4">
               {product.colors.slice(0, 5).map(color => (
                 <span
                   key={color.id}

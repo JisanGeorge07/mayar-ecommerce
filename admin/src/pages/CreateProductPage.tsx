@@ -29,7 +29,7 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
   const navigate = useNavigate();
   const hierarchy = useHierarchy();
   const productForm = useProductForm();
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(viewOnly);
   const [formStep, setFormStep] = useState(0);
   const [loading, setLoading] = useState(!!id);
   const [isEditing, setIsEditing] = useState(false);
@@ -105,10 +105,14 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
           })),
           features: (productDto.features || []).map(feature => ({
             id: feature.id,
-            labelEnglish: feature.labelEnglish || '',
-            labelArabic: feature.labelArabic || '',
-            iconName: feature.iconName || '',
+            productId: feature.productId,
+            trustBadgeId: feature.trustBadgeId,
             isActive: feature.isActive,
+            labelEnglish: feature.labelEnglish,
+            labelArabic: feature.labelArabic,
+            descriptionEnglish: feature.descriptionEnglish,
+            descriptionArabic: feature.descriptionArabic,
+            iconName: feature.iconName,
           })),
           specifications: (productDto.specifications || []).map(spec => ({
             id: spec.id,
@@ -155,13 +159,21 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
             stockQuantity: variant.stockQuantity || 0,
             inStock: variant.inStock ?? true,
             isDefault: variant.isDefault ?? false,
+            imageUrl: variant.imageUrl || '',
           })),
-          trustBadges: INITIAL_PRODUCT_FORM.trustBadges,
+          trustBadges: [], // Will be loaded separately below
           reviews: [],
           relatedProducts: [],
         };
 
-        // Set the entire form state at once
+        // ✅ Load active trust badges
+        if (productDto.features) {
+          const activeBadges = productDto.features
+            .filter(f => f.isActive)
+            .map(f => f.trustBadgeId);
+
+          newFormState.trustBadges = activeBadges;
+        }
         productForm.setFormWithTracking(newFormState);
       } else {
         toast.error('Product not found');
@@ -324,6 +336,7 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
             stockQuantity: variant.stockQuantity,
             inStock: variant.inStock,
             isDefault: variant.isDefault,
+            imageFile: variant.imageFile,                   
           });
         } else {
           // Existing variant - check if it changed
@@ -337,7 +350,8 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
             original.compareAtPriceINR !== variant.compareAtPriceINR ||
             original.stockQuantity !== variant.stockQuantity ||
             original.inStock !== variant.inStock ||
-            original.isDefault !== variant.isDefault
+            original.isDefault !== variant.isDefault ||
+            original.imageFile !== variant.imageFile
           )) {
             await productVariantService.update(variant.id, {
               productColorId: serverColorId,
@@ -349,6 +363,8 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
               stockQuantity: variant.stockQuantity,
               inStock: variant.inStock,
               isDefault: variant.isDefault,
+              imageFile: variant.imageFile,
+              imageUrl: variant.imageFile ? undefined : variant.imageUrl,
             });
           }
         }
@@ -389,39 +405,44 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
         }
       }
 
-      // Sync Features
-      const originalFeatureIds = new Set(productForm.originalForm.features.map(f => f.id));
-      const currentFeatureIds = new Set(productForm.form.features.map(f => f.id));
+      // ✅ NEW: Sync Trust Badges (Product Features)
 
-      for (const originalFeature of productForm.originalForm.features) {
-        if (!currentFeatureIds.has(originalFeature.id)) {
-          await productFeatureService.delete(originalFeature.id);
+      const existingFeatures = await productFeatureService.getByProduct(productId);
+
+      // Map: trustBadgeId → feature
+      const existingMap = new Map(
+        existingFeatures.map((f: any) => [f.trustBadgeId, f])
+      );
+
+      // ✅ Checked (Active)
+      for (const badgeId of productForm.form.trustBadges) {
+        if (existingMap.has(badgeId)) {
+          const f = existingMap.get(badgeId);
+
+          await productFeatureService.update(
+            f.id,
+            productId,
+            badgeId,
+            true
+          );
+        } else {
+          await productFeatureService.create(
+            productId,
+            badgeId,
+            true
+          );
         }
       }
 
-      for (const feature of productForm.form.features) {
-        if (!originalFeatureIds.has(feature.id)) {
-          await productFeatureService.create(productId, {
-            labelEnglish: feature.labelEnglish,
-            labelArabic: feature.labelArabic,
-            iconName: feature.iconName,
-            isActive: feature.isActive,
-          });
-        } else {
-          const original = productForm.originalForm.features.find(f => f.id === feature.id);
-          if (original && (
-            original.labelEnglish !== feature.labelEnglish ||
-            original.labelArabic !== feature.labelArabic ||
-            original.iconName !== feature.iconName ||
-            original.isActive !== feature.isActive
-          )) {
-            await productFeatureService.update(feature.id, {
-              labelEnglish: feature.labelEnglish,
-              labelArabic: feature.labelArabic,
-              iconName: feature.iconName,
-              isActive: feature.isActive,
-            });
-          }
+      // ❌ Unchecked → set inactive
+      for (const f of existingFeatures) {
+        if (!productForm.form.trustBadges.includes(f.trustBadgeId)) {
+          await productFeatureService.update(
+            f.id,
+            productId,
+            f.trustBadgeId,
+            false
+          );
         }
       }
 
@@ -589,29 +610,33 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">{pageTitle}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{pageDescription}</p>
-        </div>
+        {!viewOnly && (
+          <>
+            <div>
+              <h1 className="font-display text-2xl font-bold text-foreground">{pageTitle}</h1>
+              <p className="text-sm text-muted-foreground mt-1">{pageDescription}</p>
+            </div>
 
-        <HierarchyStepper
-          categories={hierarchy.categories}
-          subcategories={hierarchy.subcategories}
-          productTypes={hierarchy.productTypes}
-          selectedCategory={hierarchy.selectedCategory}
-          selectedSubcategory={hierarchy.selectedSubcategory}
-          selectedProductType={hierarchy.selectedProductType}
-          onSelectCategory={viewOnly ? () => { } : hierarchy.selectCategory}
-          onSelectSubcategory={viewOnly ? () => { } : hierarchy.selectSubcategory}
-          onSelectProductType={viewOnly ? () => { } : hierarchy.selectProductType}
-          currentFormStep={formStep}
-          onReset={viewOnly ? () => { } : () => {
-            hierarchy.resetHierarchy();
-            productForm.resetForm();
-            setShowPreview(false);
-            setFormStep(0);
-          }}
-        />
+            <HierarchyStepper
+              categories={hierarchy.categories}
+              subcategories={hierarchy.subcategories}
+              productTypes={hierarchy.productTypes}
+              selectedCategory={hierarchy.selectedCategory}
+              selectedSubcategory={hierarchy.selectedSubcategory}
+              selectedProductType={hierarchy.selectedProductType}
+              onSelectCategory={hierarchy.selectCategory}
+              onSelectSubcategory={hierarchy.selectSubcategory}
+              onSelectProductType={hierarchy.selectProductType}
+              currentFormStep={formStep}
+              onReset={() => {
+                hierarchy.resetHierarchy();
+                productForm.resetForm();
+                setShowPreview(false);
+                setFormStep(0);
+              }}
+            />
+          </>
+        )}
 
         {hierarchy.isComplete && !showPreview && (
           <ProductForm
@@ -663,7 +688,13 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
             categoryName={hierarchy.selectedCategory?.titleEnglish || ''}
             subcategoryName={hierarchy.selectedSubcategory?.titleEnglish || ''}
             productTypeName={hierarchy.selectedProductType?.titleEnglish || ''}
-            onClose={() => setShowPreview(false)}
+            onClose={() => {
+              if (viewOnly) {
+                navigate('/products');
+              } else {
+                setShowPreview(false);
+              }
+            }}
           />
         )}
       </div>

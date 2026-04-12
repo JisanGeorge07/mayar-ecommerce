@@ -33,4 +33,5 @@ public class ProductVariant
     public int? StockQuantity { get; set; }
     public bool InStock { get; set; } = true;
     public bool IsDefault { get; set; }
+    public string? ImageUrl { get; set; }
 }

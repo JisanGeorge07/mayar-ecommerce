@@ -13,7 +13,7 @@ public class TopCategory
     public string? TitleArabic { get; set; }
     public string? BadgeEnglish { get; set; }
     public string? BadgeArabic { get; set; }
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
     public long? DisplayOrder { get; set; }
 
     // Navigation property

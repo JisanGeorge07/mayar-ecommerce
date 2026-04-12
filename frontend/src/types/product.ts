@@ -32,6 +32,7 @@ export interface ProductVariant {
   stockQuantity?: number;
   inStock: boolean;
   isDefault: boolean;
+  imageUrl?: string;
   sku?: string;
 }
 

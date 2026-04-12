@@ -42,9 +42,11 @@ const defaultServices = [
 
 interface ProductInfoProps {
   product: ProductItem;
+  selectedColor?: string;
+  onColorChange?: (colorId: string) => void;
 }
 
-const ProductInfo = ({ product }: ProductInfoProps) => {
+const ProductInfo = ({ product, selectedColor: controlledColor, onColorChange }: ProductInfoProps) => {
   const { t, formatPrice, lang, getPrice } = useLocale();
   const { settings } = useSettings();
   const { isLoggedIn } = useAuth();
@@ -60,7 +62,14 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     ? product.variants.find(v => v.isDefault) || product.variants[0]
     : null;
 
-  const [selectedColor, setSelectedColor] = useState(defaultVariant?.colorId || product.colors[0]?.id || '');
+  // Use controlled color if provided, otherwise use internal state
+  const [internalColor, setInternalColor] = useState(defaultVariant?.colorId || product.colors[0]?.id || '');
+  const selectedColor = controlledColor ?? internalColor;
+  const setSelectedColor = (colorId: string) => {
+    setInternalColor(colorId);
+    onColorChange?.(colorId);
+  };
+
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [shareOpen, setShareOpen] = useState(false);
@@ -406,7 +415,8 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         selectedSize={selectedSize}
         currentPrice={basePrice}
         productImage={
-          (selectedColor ? product.images.find(img => img.colorId === selectedColor)?.url : undefined)
+          selectedVariant?.imageUrl
+          || (selectedColor ? product.images.find(img => img.colorId === selectedColor)?.url : undefined)
           || product.images.find(i => i.isPrimary)?.url
           || product.images[0]?.url
           || ''

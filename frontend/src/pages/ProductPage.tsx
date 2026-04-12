@@ -28,6 +28,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [recentlyViewedLoading, setRecentlyViewedLoading] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Track if we've already added this product to recently viewed
@@ -51,7 +52,11 @@ const ProductPage = () => {
           return;
         }
         setProductDto(dto);
-        setProduct(mapProductDtoToProductItem(dto));
+        const mapped = mapProductDtoToProductItem(dto);
+        setProduct(mapped);
+        // Set initial selectedColor from default variant
+        const defaultVar = mapped.variants?.find(v => v.isDefault) || mapped.variants?.[0];
+        setSelectedColor(defaultVar?.colorId || mapped.colors[0]?.id || '');
       } else {
         setError('Product not found');
       }
@@ -189,8 +194,16 @@ const ProductPage = () => {
 
         {/* Product main */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 mb-12">
-          <ProductGallery images={product.images} />
-          <ProductInfo product={product} />
+          <ProductGallery
+            images={product.images}
+            variants={product.variants}
+            selectedColor={selectedColor}
+          />
+          <ProductInfo
+            product={product}
+            selectedColor={selectedColor}
+            onColorChange={setSelectedColor}
+          />
         </div>
 
         <ProductTabs product={product} />

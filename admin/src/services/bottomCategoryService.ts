@@ -12,6 +12,11 @@ export interface BottomCategoryCreateInput {
   middleCategoryId: string;
   titleEnglish: string;
   titleArabic: string;
+  slug?: string;
+  displayOrder?: number;
+  isActive?: boolean;
+  description?: string;
+  attributeTemplate?: string;
 }
 
 export interface BottomCategoryUpdateInput {
@@ -22,6 +27,8 @@ export interface BottomCategoryUpdateInput {
   slug?: string;
   displayOrder?: number;
   isActive?: boolean;
+  description?: string;
+  attributeTemplate?: string;
 }
 
 export const bottomCategoryService = {
@@ -45,6 +52,22 @@ export const bottomCategoryService = {
     formData.append("middleCategoryId", data.middleCategoryId);
     formData.append("titleEnglish", data.titleEnglish);
     formData.append("titleArabic", data.titleArabic);
+    if (data.slug) {
+      formData.append("slug", data.slug);
+    }
+    if (data.displayOrder !== undefined) {
+      formData.append("displayOrder", data.displayOrder.toString());
+    }
+    if (data.isActive !== undefined) {
+      formData.append("isActive", data.isActive.toString());
+    }
+    if (data.description) {
+      formData.append("description", data.description);
+    }
+    if (data.attributeTemplate) {
+      formData.append("attributeTemplate", data.attributeTemplate);
+    }
+
 
     const res = await api.post<ApiResponse<BottomCategory>>("/category/bottom/create", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -74,6 +97,12 @@ export const bottomCategoryService = {
     }
     if (data.isActive !== undefined) {
       formData.append("isActive", data.isActive.toString());
+    }
+    if (data.description !== undefined) {
+      formData.append("description", data.description);
+    }
+    if (data.attributeTemplate !== undefined) {
+      formData.append("attributeTemplate", data.attributeTemplate);
     }
 
     try {

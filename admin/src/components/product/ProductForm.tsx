@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FormSection from '@/components/forms/FormSection';
 import FormField from '@/components/forms/FormField';
-import type { ProductFormState, ProductVariant, ProductImage, ProductReview, ProductColor, ProductSize, ProductSpecification, ProductCareInstruction, ProductFeature } from '@/types';
+import type { ProductFormState, ProductVariant, ProductImage, ProductReview, ProductColor, ProductSize, ProductSpecification, ProductCareInstruction, ProductFeature, TrustBadge } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Upload, Eye } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, ImageIcon } from 'lucide-react';
 import { calcDiscountPercent } from '@/utils/slug';
 import {
   AlertDialog,
@@ -20,6 +20,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { productFeatureService, trustBadgeService } from '@/services';
+import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ProductFormProps {
   form: ProductFormState;
@@ -121,6 +124,23 @@ export default function ProductForm({
     setDeleteDialog({ open: false, type: null, id: null });
   };
 
+  const [trustBadges, setTrustBadgesState] = useState<TrustBadge[]>([]);
+
+  const load = async () => {
+    try {
+      const data = await trustBadgeService.getTrustBadges();
+      setTrustBadgesState(data);
+    } catch (err) {
+      toast.error('Failed to load trust badges');
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+
+
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -134,7 +154,7 @@ export default function ProductForm({
 
         {/* BASIC INFO */}
         <TabsContent value="basic" className="space-y-4 mt-4">
-          <FormSection title="Basic Information" description="Core product details (English & Arabic)">
+          <FormSection title="Basic Information" description="Core product details">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Product Name (English)" required>
                 <Input
@@ -216,7 +236,7 @@ export default function ProductForm({
                 { key: 'is_best_seller', label: 'Best Seller' },
                 { key: 'is_on_sale', label: 'On Sale' },
                 { key: 'in_stock', label: 'In Stock' },
-                { key: 'isActive', label: 'Active (Published)' },
+                { key: 'isActive', label: 'Active' },
               ].map(toggle => (
                 <div key={toggle.key} className="flex items-center gap-2">
                   <Switch
@@ -228,11 +248,35 @@ export default function ProductForm({
               ))}
             </div>
           </FormSection>
+
+          {/* Trust Badges */}
+          <FormSection title="Trust Highlights" description="Select storefront trust badges to display">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {trustBadges.map(badge => (
+                <label key={badge.id} className="flex items-center gap-3 rounded-md border border-border p-3 bg-background cursor-pointer hover:border-primary/50 transition-colors">
+                  <Checkbox
+                    checked={form.trustBadges.includes(String(badge.id))}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setTrustBadges([...form.trustBadges, badge.id]);
+                      } else {
+                        setTrustBadges(form.trustBadges.filter(b => b !== badge.id));
+                      }
+                    }}
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{badge.labelEnglish}</p>
+                    <p className="text-xs text-muted-foreground">{badge.descriptionEnglish}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </FormSection>
         </TabsContent>
 
         {/* PRICING */}
         <TabsContent value="pricing" className="space-y-4 mt-4">
-          <FormSection title="Pricing" description="Set prices in multiple currencies">
+          <FormSection title="Base Pricing" description="Set base prices. Variants can override these.">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Base Price (KWD)" required>
                 <Input
@@ -433,247 +477,253 @@ export default function ProductForm({
 
         {/* VARIANTS */}
         <TabsContent value="variants" className="space-y-4 mt-4">
-          <FormSection title="Product Variants" description="Create variants by selecting color and size combinations">
-
-            {/* Variant Creation Form */}
-            <div className="rounded-md border border-border p-4 bg-muted/30">
-              <h4 className="font-medium mb-3">Add New Variant</h4>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
-                <FormField label="Color">
-                  <Select
-                    value={newVariantData.productColorId}
-                    onValueChange={(value) => setNewVariantData(prev => ({ ...prev, productColorId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select color..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {form.colors.filter(c => c.isActive).map(color => (
-                        <SelectItem key={color.id} value={color.id}>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-4 h-4 rounded border border-border"
-                              style={{ backgroundColor: color.hex }}
-                            />
-                            {color.nameEnglish}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
-
-                <FormField label="Size">
-                  <Select
-                    value={newVariantData.productSizeId}
-                    onValueChange={(value) => setNewVariantData(prev => ({ ...prev, productSizeId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select size..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {form.sizes.filter(s => s.isActive).map(size => (
-                        <SelectItem key={size.id} value={size.id}>
-                          {size.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
-
-                <FormField label="Stock">
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newVariantData.stockQuantity || 0}
-                    onChange={e => setNewVariantData(prev => ({
-                      ...prev,
-                      stockQuantity: parseInt(e.target.value) || 0
-                    }))}
-                    placeholder="Stock qty"
-                  />
-                </FormField>
-
-                <FormField label="Base Price KWD">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    value={newVariantData.basePriceKWD || ''}
-                    onChange={e => setNewVariantData(prev => ({
-                      ...prev,
-                      basePriceKWD: parseFloat(e.target.value) || undefined
-                    }))}
-                    placeholder="0.000"
-                  />
-                </FormField>
-
-                <Button
-                  size="sm"
-                  onClick={handleAddVariant}
-                  disabled={!newVariantData.productColorId || !newVariantData.productSizeId}
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Add Variant
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                <FormField label="Compare Price KWD">
-                  <Input
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    value={newVariantData.compareAtPriceKWD || ''}
-                    onChange={e => setNewVariantData(prev => ({
-                      ...prev,
-                      compareAtPriceKWD: parseFloat(e.target.value) || undefined
-                    }))}
-                    placeholder="0.000"
-                  />
-                </FormField>
-
-                <FormField label="Base Price INR">
-                  <Input
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={newVariantData.basePriceINR || ''}
-                    onChange={e => setNewVariantData(prev => ({
-                      ...prev,
-                      basePriceINR: parseFloat(e.target.value) || undefined
-                    }))}
-                    placeholder="0"
-                  />
-                </FormField>
-
-                <FormField label="Compare Price INR">
-                  <Input
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={newVariantData.compareAtPriceINR || ''}
-                    onChange={e => setNewVariantData(prev => ({
-                      ...prev,
-                      compareAtPriceINR: parseFloat(e.target.value) || undefined
-                    }))}
-                    placeholder="0"
-                  />
-                </FormField>
-
-                <div className="flex items-center gap-2 mt-6">
-                  <Switch
-                    checked={newVariantData.isDefault || false}
-                    onCheckedChange={v => setNewVariantData(prev => ({ ...prev, isDefault: v }))}
-                  />
-                  <span className="text-sm text-muted-foreground">Default variant</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Existing Variants List */}
+          <FormSection title="Product Variants" description="Each variant defines a color/size combo with its own image, stock, and pricing. Add colors and sizes in the Attributes tab first.">
             {form.variants.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="font-medium">Existing Variants</h4>
+              <div className="space-y-4 mb-4">
                 {form.variants.map(variant => {
                   const color = form.colors.find(c => c.id === variant.productColorId);
                   const size = form.sizes.find(s => s.id === variant.productSizeId);
 
                   return (
-                    <div key={variant.id} className="flex items-start gap-3 rounded-md border border-border p-3 bg-background">
-                      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 flex-1">
-
-                        {/* Color & Size Display */}
-                        <div className="col-span-2 md:col-span-1">
-                          <label className="text-sm font-medium text-muted-foreground">Color & Size</label>
-                          <div className="flex items-center gap-2 mt-1">
+                    <div key={variant.id} className="rounded-lg border border-border p-4 bg-background space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {color && (
                             <div
-                              className="w-4 h-4 rounded border border-border"
-                              style={{ backgroundColor: color?.hex || '#000' }}
+                              className="w-4 h-4 rounded border border-border shrink-0"
+                              style={{ backgroundColor: color.hex }}
                             />
-                            <span className="text-sm">{color?.nameEnglish || 'Unknown'}</span>
-                            <span className="text-sm text-muted-foreground">•</span>
-                            <span className="text-sm font-medium">{size?.label || 'Unknown'}</span>
-                          </div>
+                          )}
+                          <span className="text-sm font-semibold text-foreground">
+                            {color?.nameEnglish || 'No Color'} {size ? `/ ${size.label}` : ''}
+                          </span>
+                          {variant.isDefault && (
+                            <span className="rounded bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Default</span>
+                          )}
                         </div>
+                        <button
+                          onClick={() => setDeleteDialog({
+                            open: true,
+                            type: 'variant',
+                            id: variant.id,
+                            name: `${color?.nameEnglish || 'Unknown'} - ${size?.label || 'Unknown'}`,
+                          })}
+                          className="text-destructive hover:text-destructive/80"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
 
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Color Select */}
+                        <FormField label="Color">
+                          <Select
+                            value={variant.productColorId}
+                            onValueChange={(value) => updateVariant(variant.id, { productColorId: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select color..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {form.colors.filter(c => c.isActive).map(c => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className="w-4 h-4 rounded border border-border"
+                                      style={{ backgroundColor: c.hex }}
+                                    />
+                                    {c.nameEnglish}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+
+                        {/* Size Select */}
+                        <FormField label="Size">
+                          <Select
+                            value={variant.productSizeId}
+                            onValueChange={(value) => updateVariant(variant.id, { productSizeId: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select size..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {form.sizes.filter(s => s.isActive).map(s => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+
+                        {/* Stock */}
                         <FormField label="Stock">
                           <Input
                             type="number"
                             min="0"
                             value={variant.stockQuantity || 0}
                             onChange={e => updateVariant(variant.id, {
-                              stockQuantity: parseInt(e.target.value) || 0
+                              stockQuantity: parseInt(e.target.value) || 0,
+                              inStock: (parseInt(e.target.value) || 0) > 0,
                             })}
                           />
                         </FormField>
 
+                        {/* Base Price KWD */}
                         <FormField label="Base Price KWD">
                           <Input
                             type="number"
                             step="0.001"
                             min="0"
-                            value={variant.basePriceKWD || ''}
+                            value={variant.basePriceKWD ?? ''}
                             onChange={e => updateVariant(variant.id, {
-                              basePriceKWD: parseFloat(e.target.value) || undefined
+                              basePriceKWD: e.target.value === '' ? undefined : parseFloat(e.target.value),
                             })}
+                            placeholder="0.000"
                           />
                         </FormField>
 
+                        {/* Compare Price KWD */}
                         <FormField label="Compare Price KWD">
                           <Input
                             type="number"
                             step="0.001"
                             min="0"
-                            value={variant.compareAtPriceKWD || ''}
+                            value={variant.compareAtPriceKWD ?? ''}
                             onChange={e => updateVariant(variant.id, {
-                              compareAtPriceKWD: parseFloat(e.target.value) || undefined
+                              compareAtPriceKWD: e.target.value === '' ? undefined : parseFloat(e.target.value),
                             })}
+                            placeholder="0.000"
                           />
                         </FormField>
 
+                        {/* Base Price INR */}
                         <FormField label="Base Price INR">
                           <Input
                             type="number"
                             step="1"
                             min="0"
-                            value={variant.basePriceINR || ''}
+                            value={variant.basePriceINR ?? ''}
                             onChange={e => updateVariant(variant.id, {
-                              basePriceINR: parseFloat(e.target.value) || undefined
+                              basePriceINR: e.target.value === '' ? undefined : parseFloat(e.target.value),
                             })}
+                            placeholder="0"
                           />
                         </FormField>
 
+                        {/* Compare Price INR */}
+                        <FormField label="Compare Price INR">
+                          <Input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={variant.compareAtPriceINR ?? ''}
+                            onChange={e => updateVariant(variant.id, {
+                              compareAtPriceINR: e.target.value === '' ? undefined : parseFloat(e.target.value),
+                            })}
+                            placeholder="0"
+                          />
+                        </FormField>
+
+                        {/* Default Toggle */}
                         <div className="flex items-center gap-2 mt-6">
                           <Switch
                             checked={variant.isDefault || false}
-                            onCheckedChange={v => updateVariant(variant.id, { isDefault: v })}
+                            onCheckedChange={v => {
+                              if (v) {
+                                // Unset default on all other variants
+                                form.variants.forEach(otherV => {
+                                  if (otherV.id !== variant.id && otherV.isDefault) {
+                                    updateVariant(otherV.id, { isDefault: false });
+                                  }
+                                });
+                              }
+                              updateVariant(variant.id, { isDefault: v });
+                            }}
                           />
-                          <span className="text-xs text-muted-foreground">Default</span>
+                          <span className="text-sm text-muted-foreground">Default variant</span>
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => setDeleteDialog({
-                          open: true,
-                          type: 'variant',
-                          id: variant.id,
-                          name: `${color?.nameEnglish || 'Unknown'} - ${size?.label || 'Unknown'}`,
-                        })}
-                        className="mt-2 text-destructive hover:text-destructive/80"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {/* Variant Image */}
+                      <div>
+                        <p className="text-xs font-medium text-foreground mb-2">Variant Image</p>
+                        <div className="flex items-center gap-4">
+                          {variant.imageUrl ? (
+                            <div className="relative h-20 w-20 rounded-lg border border-border overflow-hidden bg-muted group">
+                              <img src={variant.imageUrl} alt={color?.nameEnglish || 'Variant'} className="h-full w-full object-cover" />
+                              <button
+                                onClick={() => updateVariant(variant.id, { imageUrl: '', imageFile: undefined })}
+                                className="absolute inset-0 bg-destructive/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                              <ImageIcon className="h-5 w-5 mb-0.5" />
+                              <span className="text-[10px]">Upload</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    updateVariant(variant.id, {
+                                      imageUrl: URL.createObjectURL(file),
+                                      imageFile: file,
+                                    });
+                                  }
+                                }}
+                              />
+                            </label>
+                          )}
+                          <p className="text-xs text-muted-foreground">Upload an image for this variant. Used in storefront gallery when this color/size is selected.</p>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
-
+{/* 
             {form.variants.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground mb-4">
                 <p>No variants created yet.</p>
-                <p className="text-sm">Add colors and sizes in the Attributes tab first, then create variants above.</p>
+                <p className="text-sm">Add colors and sizes in the Attributes tab first, then create variants here.</p>
               </div>
+            )} */}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const newVariant = {
+                  id: crypto.randomUUID(),
+                  productId: form.basic.id || '',
+                  productColorId: form.colors.find(c => c.isActive)?.id || '',
+                  productSizeId: form.sizes.find(s => s.isActive)?.id || '',
+                  basePriceKWD: form.basic.base_price_kwd || 0,
+                  compareAtPriceKWD: form.basic.compare_price_kwd || 0,
+                  basePriceINR: form.basic.base_price_inr || 0,
+                  compareAtPriceINR: form.basic.compare_price_inr || 0,
+                  stockQuantity: 0,
+                  inStock: false,
+                  isDefault: form.variants.length === 0,
+                  imageUrl: '',
+                };
+                addVariant(newVariant);
+              }}
+              disabled={form.colors.filter(c => c.isActive).length === 0 || form.sizes.filter(s => s.isActive).length === 0}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Add Variant
+            </Button>
+            {(form.colors.filter(c => c.isActive).length === 0 || form.sizes.filter(s => s.isActive).length === 0) && (
+              <p className="text-xs text-destructive mt-2">Please add at least one active color and one active size in the Attributes tab before adding variants.</p>
             )}
           </FormSection>
         </TabsContent>
@@ -986,7 +1036,7 @@ export default function ProductForm({
           </FormSection>
 
           {/* Product Features - NEW SECTION */}
-          <FormSection title="Product Features" description="Add product features with icons (English & Arabic)">
+          {/* <FormSection title="Product Features" description="Add product features with icons (English & Arabic)">
             <div className="space-y-4 mb-4">
               {form.features.map((feature) => (
                 <div key={feature.id} className="rounded-md border border-border p-4 bg-background space-y-3">
@@ -1047,7 +1097,7 @@ export default function ProductForm({
             >
               <Plus className="h-4 w-4 mr-1" /> Add Feature
             </Button>
-          </FormSection>
+          </FormSection> */}
         </TabsContent>
 
         {/* SEO */}

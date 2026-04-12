@@ -17,6 +17,8 @@ public class ProductVariantDto
     public int? StockQuantity { get; set; }
     public bool InStock { get; set; }
     public bool IsDefault { get; set; }
+    public IFormFile? ImageFile { get; set; }
+    public string? ImageUrl { get; set; }
 
     // Nested objects for easier frontend consumption
     public ProductColorDto? Color { get; set; }

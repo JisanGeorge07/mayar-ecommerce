@@ -17,7 +17,7 @@ interface HierarchyStepperProps {
   currentFormStep: number;
 }
 
-const STEPS = ['Category', 'Subcategory', 'Product Type', 'Product Details', 'Preview / Publish'];
+const STEPS = ['Category', 'Subcategory', 'Product Type', 'Product Details', 'Media', 'SEO', 'Preview / Publish'];
 
 export default function HierarchyStepper({
   categories, subcategories, productTypes,

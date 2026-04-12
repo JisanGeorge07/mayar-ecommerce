@@ -75,7 +75,7 @@ public static class CartItemMapper
             ProductNameArabic = product.NameArabic,
             BrandEnglish = product.BrandEnglish,
             BrandArabic = product.BrandArabic,
-            ImageUrl = primaryImage?.ImageUrl,
+            ImageUrl = !string.IsNullOrEmpty(variant?.ImageUrl) ? variant.ImageUrl : primaryImage?.ImageUrl,
 
             ProductVariantId = variant?.Id,
             ProductColorId = color?.Id,

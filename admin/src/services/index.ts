@@ -1,6 +1,8 @@
 import type { Category, Subcategory, ProductType, Product, ProductFormState } from '@/types';
 import api from '@/lib/axios';
 
+
+
 // API Response types
 interface ApiResponse<T> {
   success: boolean;
@@ -9,6 +11,16 @@ interface ApiResponse<T> {
 }
 
 // Backend DTOs
+interface TrustBadgeDto {
+  id: string;
+  key?: string;
+  labelEnglish?: string;
+  labelArabic?: string;
+  descriptionEnglish?: string;
+  descriptionArabic?: string;
+  iconName?: string;
+}
+
 interface TopCategoryDto {
   id: string;
   slug?: string;
@@ -72,10 +84,15 @@ interface ProductSizeDto {
 interface ProductFeatureDto {
   id: string;
   productId: string;
+  trustBadgeId: string;
+  isActive: boolean;
+  // Trust badge details (populated from backend)
+  key?: string;
   labelEnglish?: string;
   labelArabic?: string;
+  descriptionEnglish?: string;
+  descriptionArabic?: string;
   iconName?: string;
-  isActive: boolean;
 }
 
 interface ProductSpecificationDto {
@@ -111,6 +128,7 @@ interface ProductVariantDto {
   // Nested objects for easier frontend consumption
   color?: ProductColorDto;
   size?: ProductSizeDto;
+  imageUrl?: string;
 }
 
 interface ProductDto {
@@ -205,8 +223,11 @@ function mapBottomCategoryToProductType(dto: BottomCategoryDto): ProductType {
 }
 
 function mapProductDtoToProduct(dto: ProductDto): Product {
+  const defaultVariantImage = dto.variants?.find(v => v.isDefault && v.imageUrl)?.imageUrl;
   const primaryImage = dto.images?.find(img => img.isPrimary && img.isActive)?.imageUrl || '';
-  const firstImage = primaryImage || dto.images?.find(img => img.isActive)?.imageUrl || '';
+  const firstFallbackImage = primaryImage || dto.images?.find(img => img.isActive)?.imageUrl || '';
+  const finalImage = defaultVariantImage || firstFallbackImage;
+
   return {
     id: dto.id,
     category_id: dto.topCategoryId,
@@ -242,11 +263,18 @@ function mapProductDtoToProduct(dto: ProductDto): Product {
     strap_type: '',
     rating: dto.rating || 0,
     review_count: dto.reviewCount || 0,
-    image_url: firstImage,
+    image_url: finalImage,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
 }
+//Trust Badge Service - connects to /api/TrustBadge
+export const trustBadgeService = {
+  async getTrustBadges(): Promise<TrustBadgeDto[]> {
+    const response = await api.get<ApiResponse<TrustBadgeDto[]>>('/TrustBadge/get-all');
+    return response.data.data;
+  }
+};
 
 // Category Service - connects to /api/Category/top
 export const categoryService = {
@@ -279,6 +307,7 @@ export const categoryService = {
     formData.append('TitleEnglish', data.name);
     formData.append('Slug', data.slug);
     formData.append('IsActive', String(data.status === 'active'));
+    formData.append('DisplayOrder', String(data.display_order || 0));
     if (data.description) formData.append('TitleArabic', data.description);
 
     const response = await api.post<ApiResponse<TopCategoryDto>>('/Category/top/create', formData, {
@@ -774,49 +803,39 @@ export const productImageService = {
 
 // Product Feature Service
 export const productFeatureService = {
-  async create(productId: string, data: { labelEnglish: string; labelArabic: string; iconName: string; isActive: boolean }): Promise<ProductFeatureDto> {
-    const formData = new FormData();
-    formData.append('ProductId', productId);
-    formData.append('LabelEnglish', data.labelEnglish);
-    formData.append('LabelArabic', data.labelArabic);
-    formData.append('IconName', data.iconName);
-    formData.append('IsActive', String(data.isActive));
+  async getByProduct(productId: string): Promise<ProductFeatureDto[]> {
+    const res = await api.get(`/ProductFeature/get-by-product/${productId}`);
+    return res.data.data;
+  },
 
-    const response = await api.post<ApiResponse<ProductFeatureDto>>('/ProductFeature/create', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    if (response.data.success && response.data.data) {
-      return response.data.data;
-    }
-    throw new Error(response.data.message || 'Failed to create feature');
-  },
-  async update(id: string, data: Partial<{ labelEnglish: string; labelArabic: string; iconName: string; isActive: boolean }>): Promise<ProductFeatureDto | undefined> {
+  async create(productId: string, trustBadgeId: string, isActive: boolean) {
     const formData = new FormData();
-    if (data.labelEnglish !== undefined) formData.append('LabelEnglish', data.labelEnglish);
-    if (data.labelArabic !== undefined) formData.append('LabelArabic', data.labelArabic);
-    if (data.iconName !== undefined) formData.append('IconName', data.iconName);
-    if (data.isActive !== undefined) formData.append('IsActive', String(data.isActive));
+    formData.append("ProductId", productId);
+    formData.append("TrustBadgeId", trustBadgeId);
+    formData.append("IsActive", isActive.toString());
 
-    const response = await api.put<ApiResponse<ProductFeatureDto>>(`/ProductFeature/update/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    const res = await api.post(`/ProductFeature/create`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
-    if (response.data.success && response.data.data) {
-      return response.data.data;
-    }
-    return undefined;
+    return res.data.data;
   },
-  async delete(id: string): Promise<boolean> {
-    try {
-      const response = await api.delete<ApiResponse<object>>(`/ProductFeature/delete/${id}`);
-      return response.data.success;
-    } catch {
-      return false;
-    }
-  },
+
+  async update(id: string, productId: string, trustBadgeId: string, isActive: boolean) {
+    const formData = new FormData();
+    formData.append("ProductId", productId);
+    formData.append("TrustBadgeId", trustBadgeId);
+    formData.append("IsActive", isActive.toString());
+
+    const res = await api.put(`/ProductFeature/update/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data.data;
+  }
 };
 
 // Product Specification Service
 export const productSpecificationService = {
+  
   async create(productId: string, data: { labelEnglish: string; labelArabic: string; valueEnglish: string; valueArabic: string; isActive: boolean }): Promise<ProductSpecificationDto> {
     const formData = new FormData();
     formData.append('ProductId', productId);

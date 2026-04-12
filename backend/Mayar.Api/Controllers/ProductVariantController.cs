@@ -65,7 +65,7 @@ namespace Mayar.Api.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost("create")]
-        public async Task<IActionResult> Create([FromBody] ProductVariantDto dto)
+        public async Task<IActionResult> Create([FromForm] ProductVariantDto dto)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace Mayar.Api.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] ProductVariantDto dto)
+        public async Task<IActionResult> Update(Guid id, [FromForm] ProductVariantDto dto)
         {
             try
             {

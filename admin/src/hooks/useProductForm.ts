@@ -24,6 +24,9 @@ export function useProductForm(initial?: Partial<ProductFormState>) {
     compareAtPriceINR: undefined,
     inStock: true,
     isDefault: false,
+    
+    imageUrl: '',
+    imageFile: undefined,
   });
 
   const updateBasic = useCallback((field: string, value: any) => {
@@ -176,6 +179,8 @@ export function useProductForm(initial?: Partial<ProductFormState>) {
       stockQuantity: newVariantData.stockQuantity || 0,
       inStock: (newVariantData.stockQuantity || 0) > 0,
       isDefault: newVariantData.isDefault || false,
+      imageUrl: newVariantData.imageUrl,
+      imageFile: newVariantData.imageFile,
     };
 
     // Add the variant
@@ -192,6 +197,8 @@ export function useProductForm(initial?: Partial<ProductFormState>) {
       compareAtPriceINR: undefined,
       inStock: true,
       isDefault: false,
+      imageUrl: '',
+      imageFile: undefined,
     });
   }, [newVariantData, form.variants, form.basic.id]);
 

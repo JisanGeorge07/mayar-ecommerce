@@ -15,6 +15,7 @@ import ProductTypesPage from "./pages/ProductTypesPage";
 import ProductsPage from "./pages/ProductsPage";
 import CreateProductPage from "./pages/CreateProductPage";
 import EditProductPage from "./pages/EditProductPage";
+import ViewProductPage from "./pages/ViewProductPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import HeroBannersPage from "./pages/HeroBannersPage";
 import ShopByCategoryPage from "./pages/ShopByCategoryPage";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/products" element={<ProtectedAdmin><ProductsPage /></ProtectedAdmin>} />
             <Route path="/products/new" element={<ProtectedAdmin><CreateProductPage /></ProtectedAdmin>} />
             <Route path="/products/edit/:id" element={<ProtectedAdmin><EditProductPage /></ProtectedAdmin>} />
+            <Route path="/products/view/:id" element={<ProtectedAdmin><ViewProductPage /></ProtectedAdmin>} />
             <Route path="/notifications" element={<ProtectedAdmin><NotificationsPage /></ProtectedAdmin>} />
             <Route path="/hero-banners" element={<ProtectedAdmin><HeroBannersPage /></ProtectedAdmin>} />
             <Route path="/shop-by-category" element={<ProtectedAdmin><ShopByCategoryPage /></ProtectedAdmin>} />

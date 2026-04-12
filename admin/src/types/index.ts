@@ -11,14 +11,13 @@ export interface Category {
 
 export interface TopCategory {
   id: string;
-  slug?: string;
-  imageUrl?: string;
-  imageAlt?: string;
-  titleEnglish?: string;
-  titleArabic?: string;
+  slug: string;
+  titleEnglish: string;
+  titleArabic: string;
   badgeEnglish?: string;
   badgeArabic?: string;
   isActive: boolean;
+  description?: string;
   displayOrder?: number;
 }
 
@@ -41,6 +40,8 @@ export interface BottomCategory {
   titleArabic?: string;
   isActive: boolean;
   displayOrder?: number;
+  description?: string;
+  attributeTemplate?: string;
 }
 
 export interface Subcategory {
@@ -122,6 +123,8 @@ export interface ProductVariant {
   // Nested objects for easier frontend consumption
   color?: ProductColor;
   size?: ProductSize;
+  imageUrl?: string;
+  imageFile?: File;
 }
 
 export interface ProductColor {
@@ -156,10 +159,15 @@ export interface ProductCareInstruction {
 
 export interface ProductFeature {
   id: string;
-  labelEnglish: string;
-  labelArabic: string;
-  iconName: string;
+  productId: string;
+  trustBadgeId: string;
   isActive: boolean;
+  // Trust badge details (populated from backend)
+  labelEnglish?: string;
+  labelArabic?: string;
+  descriptionEnglish?: string;
+  descriptionArabic?: string;
+  iconName?: string;
 }
 
 export interface ProductImage {
@@ -210,9 +218,13 @@ export interface ProductReview {
 }
 
 export interface TrustBadge {
-  icon: string;
-  label: string;
-  description: string;
+  id: string;
+  key?: string;
+  labelEnglish?: string;
+  labelArabic?: string;
+  descriptionEnglish?: string;
+  descriptionArabic?: string;
+  iconName?: string;
 }
 
 export interface RelatedProductEntry {
@@ -297,7 +309,7 @@ export const INITIAL_PRODUCT_FORM: ProductFormState = {
   specifications: [],
   careInstructions: [],
   features: [],
-  trustBadges: ['free_delivery', 'easy_returns', 'secure_payment', 'authentic'],
+  trustBadges: [],
   seo: {},
   reviews: [],
   relatedProducts: [],

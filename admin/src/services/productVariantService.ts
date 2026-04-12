@@ -18,6 +18,8 @@ export interface ProductVariantCreateInput {
   stockQuantity?: number;
   inStock?: boolean;
   isDefault?: boolean;
+  imageFile?: File;
+  imageUrl?: string;
 }
 
 export interface ProductVariantUpdateInput {
@@ -30,6 +32,8 @@ export interface ProductVariantUpdateInput {
   stockQuantity?: number;
   inStock?: boolean;
   isDefault?: boolean;
+  imageFile?: File;
+  imageUrl?: string;
 }
 
 export interface CheckStockRequest {
@@ -98,7 +102,24 @@ export const productVariantService = {
 
   async create(data: ProductVariantCreateInput): Promise<ProductVariant | null> {
     try {
-      const res = await api.post<ApiResponse<ProductVariant>>("/productvariant/create", data);
+      const formData = new FormData();
+      formData.append('ProductId', data.productId);
+      formData.append('ProductColorId', data.productColorId);
+      formData.append('ProductSizeId', data.productSizeId);
+      if (data.basePriceKWD !== undefined) formData.append('BasePriceKWD', String(data.basePriceKWD));
+      if (data.compareAtPriceKWD !== undefined) formData.append('CompareAtPriceKWD', String(data.compareAtPriceKWD));
+      if (data.basePriceINR !== undefined) formData.append('BasePriceINR', String(data.basePriceINR));
+      if (data.compareAtPriceINR !== undefined) formData.append('CompareAtPriceINR', String(data.compareAtPriceINR));
+      if (data.stockQuantity !== undefined) formData.append('StockQuantity', String(data.stockQuantity));
+      formData.append('InStock', String(data.inStock ?? true));
+      formData.append('IsDefault', String(data.isDefault ?? false));
+      if (data.imageFile) {
+        formData.append('ImageFile', data.imageFile);
+      }
+
+      const res = await api.post<ApiResponse<ProductVariant>>("/productvariant/create", formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       return res.data.data;
     } catch {
       return null;
@@ -107,7 +128,23 @@ export const productVariantService = {
 
   async update(id: string, data: ProductVariantUpdateInput): Promise<ProductVariant | null> {
     try {
-      const res = await api.put<ApiResponse<ProductVariant>>(`/productvariant/update/${id}`, data);
+      const formData = new FormData();
+      if (data.productColorId) formData.append('ProductColorId', data.productColorId);
+      if (data.productSizeId) formData.append('ProductSizeId', data.productSizeId);
+      if (data.basePriceKWD !== undefined) formData.append('BasePriceKWD', String(data.basePriceKWD));
+      if (data.compareAtPriceKWD !== undefined) formData.append('CompareAtPriceKWD', String(data.compareAtPriceKWD));
+      if (data.basePriceINR !== undefined) formData.append('BasePriceINR', String(data.basePriceINR));
+      if (data.compareAtPriceINR !== undefined) formData.append('CompareAtPriceINR', String(data.compareAtPriceINR));
+      if (data.stockQuantity !== undefined) formData.append('StockQuantity', String(data.stockQuantity));
+      if (data.inStock !== undefined) formData.append('InStock', String(data.inStock));
+      if (data.isDefault !== undefined) formData.append('IsDefault', String(data.isDefault));
+      if (data.imageFile) {
+        formData.append('ImageFile', data.imageFile);
+      }
+
+      const res = await api.put<ApiResponse<ProductVariant>>(`/productvariant/update/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       return res.data.data;
     } catch {
       return null;
@@ -150,4 +187,4 @@ export const productVariantService = {
 
     return results;
   }
-};
+};

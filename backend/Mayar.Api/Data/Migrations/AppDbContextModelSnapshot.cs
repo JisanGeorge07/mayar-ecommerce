@@ -262,6 +262,12 @@ namespace Mayar.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("AttributeTemplate")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
                     b.Property<long?>("DisplayOrder")
                         .HasColumnType("bigint");
 
@@ -1467,24 +1473,20 @@ namespace Mayar.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("IconName")
-                        .HasColumnType("longtext");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("LabelArabic")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("LabelEnglish")
-                        .HasColumnType("longtext");
-
                     b.Property<Guid>("ProductId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TrustBadgeId")
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("TrustBadgeId");
 
                     b.ToTable("ProductFeatures");
                 });
@@ -1587,6 +1589,9 @@ namespace Mayar.Api.Data.Migrations
 
                     b.Property<decimal?>("CompareAtPriceKWD")
                         .HasColumnType("decimal(18,3)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("InStock")
                         .HasColumnType("tinyint(1)");
@@ -1869,6 +1874,77 @@ namespace Mayar.Api.Data.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("Mayar.Api.Entities.TrustBadge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("DescriptionArabic")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("DescriptionEnglish")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("IconName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Key")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LabelArabic")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LabelEnglish")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TrustBadges");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b539bf56-c62c-4b6e-a057-8c1d250a9264"),
+                            DescriptionArabic = "على الطلبات التي تزيد عن 10 دنانير كويتية",
+                            DescriptionEnglish = "On orders over 10 KWD",
+                            IconName = "Truck",
+                            Key = "free_delivery",
+                            LabelArabic = "توصيل مجاني",
+                            LabelEnglish = "Free Delivery"
+                        },
+                        new
+                        {
+                            Id = new Guid("fa29959c-d06c-437c-a9c7-a982fe2cd94b"),
+                            DescriptionArabic = "سياسة إرجاع لمدة 14 يومًا",
+                            DescriptionEnglish = "14 day return policy",
+                            IconName = "RotateCcw",
+                            Key = "easy_returns",
+                            LabelArabic = "إرجاع سهل",
+                            LabelEnglish = "Easy Returns"
+                        },
+                        new
+                        {
+                            Id = new Guid("6810b87a-0fe0-4015-a0ad-815a3df1da6f"),
+                            DescriptionArabic = "الدفع المشفر",
+                            DescriptionEnglish = "Encrypted checkout",
+                            IconName = "Shield",
+                            Key = "secure_payment",
+                            LabelArabic = "دفع آمن",
+                            LabelEnglish = "Secure Payment"
+                        },
+                        new
+                        {
+                            Id = new Guid("4f8ae8b5-58de-492b-ae5b-743623a1f6b7"),
+                            DescriptionArabic = "100% أصلي",
+                            DescriptionEnglish = "100% genuine",
+                            IconName = "CheckCircle",
+                            Key = "authentic",
+                            LabelArabic = "منتجات أصلية",
+                            LabelEnglish = "Authentic Products"
+                        });
+                });
+
             modelBuilder.Entity("Mayar.Api.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1916,10 +1992,10 @@ namespace Mayar.Api.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("c524ffaf-b709-4765-994b-9cf1c7f26d3d"),
+                            Id = new Guid("85f53787-321e-4c4c-9ace-361784ca2358"),
                             Email = "admin@mayar.com",
                             Name = "Admin",
-                            PasswordHash = "$2a$11$o2gAXj1NY2MIb9tecOx7e.wfNLQK/rclYaQIDH984/aa0dwasqgUq",
+                            PasswordHash = "$2a$11$MSnre6LL.uFIEseKkb8.CuXoCOlVbb/TwTrqNXRSMBvM1rqaA7joW",
                             Role = "Admin"
                         });
                 });
@@ -2253,7 +2329,15 @@ namespace Mayar.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Mayar.Api.Entities.TrustBadge", "TrustBadge")
+                        .WithMany()
+                        .HasForeignKey("TrustBadgeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Product");
+
+                    b.Navigation("TrustBadge");
                 });
 
             modelBuilder.Entity("Mayar.Api.Entities.ProductImage", b =>

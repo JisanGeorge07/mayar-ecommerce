@@ -83,7 +83,7 @@ export default function ReturnsExchangePage() {
     toast.success(status === 'published' ? 'Returns & Exchange page published' : 'Draft saved successfully');
   };
 
-  if (!data) return <AdminLayout><div className="p-6">Loading...</div></AdminLayout>;
+  if (!data) return <AdminLayout></AdminLayout>;
 
   return (
     <AdminLayout>
@@ -136,7 +136,7 @@ export default function ReturnsExchangePage() {
               <Collapsible key={sec.id} open={openSections[sec.id]} onOpenChange={() => toggleOpen(sec.id)}>
                 <div className="rounded-lg border border-border">
                   <CollapsibleTrigger asChild>
-                    <button className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors">
+                    <div className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-semibold text-muted-foreground w-6">{idx + 1}</span>
                         <span className="text-sm font-medium text-foreground">{sec.title_en || 'Untitled Section'}</span>
@@ -146,7 +146,7 @@ export default function ReturnsExchangePage() {
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); moveSection(idx, 1); }} disabled={idx === data.sections.length - 1}><ChevronDown className="h-3 w-3" /></Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); removeSection(sec.id); }} disabled={data.sections.length <= 1}><Trash2 className="h-3 w-3" /></Button>
                       </div>
-                    </button>
+                    </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="border-t border-border px-4 py-4 space-y-4">

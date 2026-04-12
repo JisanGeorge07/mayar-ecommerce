@@ -35,7 +35,8 @@ public static class TopCategoryMapper
             TitleArabic = topCategoryDto.TitleArabic,
             BadgeEnglish = topCategoryDto.BadgeEnglish,
             BadgeArabic = topCategoryDto.BadgeArabic,
-            DisplayOrder=topCategoryDto.DisplayOrder
+            DisplayOrder=topCategoryDto.DisplayOrder,
+            IsActive = topCategoryDto.IsActive
         };
     }
 }

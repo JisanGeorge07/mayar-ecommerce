@@ -38,13 +38,16 @@ const QuickAddPopup = ({ product, open, onOpenChange, mode = 'cart' }: QuickAddP
   }, [product.variants, selectedColor, selectedSize]);
 
   const variantImage = useMemo(() => {
+    if (currentVariant?.imageUrl) {
+      return currentVariant.imageUrl;
+    }
     if (selectedColor) {
       const colorImg = product.images.find(img => img.colorId === selectedColor);
       if (colorImg) return colorImg.url;
     }
     const primary = product.images.find(i => i.isPrimary) || product.images[0];
     return primary?.url || '';
-  }, [product.images, selectedColor]);
+  }, [product.images, selectedColor, currentVariant]);
 
   const currentPrice = getPrice(
     currentVariant?.basePriceKWD ?? product.basePriceKWD,

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Mayar.Api.Services;
 
-public class ProductVariantService(AppDbContext context) : IProductVariantService
+public class ProductVariantService(AppDbContext context,ICloudinaryService cloudinaryService) : IProductVariantService
 {
     public async Task<ProductVariantDto?> GetByIdAsync(Guid id)
     {
@@ -87,6 +87,12 @@ public class ProductVariantService(AppDbContext context) : IProductVariantServic
 
         var variant = dto.ToProductVariantEntity();
         variant.Id = Guid.NewGuid();
+        if(dto.ImageFile != null)
+        {
+            var imageUrl = await cloudinaryService.UploadImageAsync(dto.ImageFile, "mayar-product-variants");
+            variant.ImageUrl = imageUrl;
+        }
+
 
         // If this is the first variant, make it default
         var hasExistingVariants = await context.ProductVariants
@@ -146,6 +152,11 @@ public class ProductVariantService(AppDbContext context) : IProductVariantServic
         variant.StockQuantity = dto.StockQuantity;
         variant.InStock = dto.InStock;
         variant.IsDefault = dto.IsDefault;
+        if(dto.ImageFile != null)
+        {
+            var imageUrl = await cloudinaryService.UploadImageAsync(dto.ImageFile, "mayar-product-variants");
+            variant.ImageUrl = imageUrl;
+        }
 
         await context.SaveChangesAsync();
 

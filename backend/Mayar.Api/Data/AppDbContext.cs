@@ -54,6 +54,8 @@ namespace Mayar.Api.Data
         public DbSet<CheckoutCountry> CheckoutCountries { get; set; }
         public DbSet<CheckoutAddressField> CheckoutAddressFields { get; set; }
 
+        public DbSet<TrustBadge> TrustBadges { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -277,6 +279,49 @@ namespace Mayar.Api.Data
                     Email = "admin@mayar.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                     Role = "Admin",
+                }
+            );
+
+            modelBuilder.Entity<TrustBadge>().HasData(
+                new TrustBadge
+                {
+                    Id = Guid.NewGuid(),
+                    Key = "free_delivery",
+                    LabelEnglish = "Free Delivery",
+                    LabelArabic = "توصيل مجاني",
+                    DescriptionEnglish = "On orders over 10 KWD",
+                    DescriptionArabic = "على الطلبات التي تزيد عن 10 دنانير كويتية",
+                    IconName = "Truck"
+                },
+                new TrustBadge
+                {
+                    Id = Guid.NewGuid(),
+                    Key = "easy_returns",
+                    LabelEnglish = "Easy Returns",
+                    LabelArabic = "إرجاع سهل",
+                    DescriptionEnglish = "14 day return policy",
+                    DescriptionArabic = "سياسة إرجاع لمدة 14 يومًا",
+                    IconName = "RotateCcw"
+                },
+                new TrustBadge
+                {
+                    Id = Guid.NewGuid(),
+                    Key = "secure_payment",
+                    LabelEnglish = "Secure Payment",
+                    LabelArabic = "دفع آمن",
+                    DescriptionEnglish = "Encrypted checkout",
+                    DescriptionArabic = "الدفع المشفر",
+                    IconName = "Shield"
+                },
+                new TrustBadge
+                {
+                    Id = Guid.NewGuid(),
+                    Key = "authentic",
+                    LabelEnglish = "Authentic Products",
+                    LabelArabic = "منتجات أصلية",
+                    DescriptionEnglish = "100% genuine",
+                    DescriptionArabic = "100% أصلي",
+                    IconName = "CheckCircle"
                 }
             );
         }

@@ -52,6 +52,7 @@ export const mapProductDtoToProductItem = (dto: ProductDto): ProductItem => {
     stockQuantity: v.stockQuantity,
     inStock: v.inStock,
     isDefault: v.isDefault,
+    imageUrl: v.imageUrl,
   }));
 
   // Map specifications

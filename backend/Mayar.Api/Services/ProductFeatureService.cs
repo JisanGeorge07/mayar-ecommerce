@@ -11,19 +11,24 @@ public class ProductFeatureService(AppDbContext context) : IProductFeatureServic
 {
     public async Task<List<ProductFeatureDto>> GetAllAsync()
     {
-        var features = await context.ProductFeatures.ToListAsync();
+        var features = await context.ProductFeatures
+            .Include(f => f.TrustBadge)
+            .ToListAsync();
         return features.Select(f => f.ToProductFeatureDto()).ToList();
     }
 
     public async Task<ProductFeatureDto?> GetByIdAsync(Guid id)
     {
-        var feature = await context.ProductFeatures.FindAsync(id);
+        var feature = await context.ProductFeatures
+            .Include(f => f.TrustBadge)
+            .FirstOrDefaultAsync(f => f.Id == id);
         return feature?.ToProductFeatureDto();
     }
 
     public async Task<List<ProductFeatureDto>> GetByProductIdAsync(Guid productId)
     {
         var features = await context.ProductFeatures
+            .Include(f => f.TrustBadge)
             .Where(f => f.ProductId == productId)
             .ToListAsync();
         return features.Select(f => f.ToProductFeatureDto()).ToList();
@@ -35,9 +40,8 @@ public class ProductFeatureService(AppDbContext context) : IProductFeatureServic
         {
             Id = Guid.NewGuid(),
             ProductId = dto.ProductId,
-            LabelEnglish = dto.LabelEnglish,
-            LabelArabic = dto.LabelArabic,
-            IconName = dto.IconName,
+            TrustBadgeId = dto.TrustBadgeId,
+            IsActive = dto.IsActive
         };
 
         context.ProductFeatures.Add(entity);
@@ -54,9 +58,9 @@ public class ProductFeatureService(AppDbContext context) : IProductFeatureServic
             return null;
         }
 
-        entity.LabelEnglish = dto.LabelEnglish;
-        entity.LabelArabic = dto.LabelArabic;
-        entity.IconName = dto.IconName;
+   
+        entity.TrustBadgeId = dto.TrustBadgeId;
+        entity.IsActive = dto.IsActive;
 
         await context.SaveChangesAsync();
 

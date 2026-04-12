@@ -42,7 +42,8 @@ public static class MiddleCategoryMapper
             ButtonTextEnglish = middleCategoryDto.ButtonTextEnglish,
             ButtonTextArabic = middleCategoryDto.ButtonTextArabic,
             ButtonLink = middleCategoryDto.ButtonLink,
-            DisplayOrder = middleCategoryDto.DisplayOrder
+            DisplayOrder = middleCategoryDto.DisplayOrder,
+            IsActive = middleCategoryDto.IsActive
         };
     }
 }

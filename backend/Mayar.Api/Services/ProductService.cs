@@ -21,6 +21,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .ToListAsync();
@@ -39,6 +40,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .FirstOrDefaultAsync(p => p.Id == id);
@@ -57,6 +59,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .Where(p => ids.Contains(p.Id) && p.IsActive)
@@ -81,6 +84,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .FirstOrDefaultAsync(p => p.Slug == slug);
@@ -99,6 +103,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .Where(p => p.IsBestSeller == true && p.IsActive)
@@ -118,6 +123,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .Where(p => p.IsNew == true && p.IsActive)
@@ -137,6 +143,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .Where(p => p.IsFeatured == true && p.IsActive)
@@ -156,6 +163,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .Where(p => p.IsOnSale == true && p.IsActive)
@@ -175,6 +183,7 @@ public class ProductService(AppDbContext context) : IProductService
             .Include(p => p.Variants)
                 .ThenInclude(v => v.ProductSize)
             .Include(p => p.Features)
+                .ThenInclude(f => f.TrustBadge)
             .Include(p => p.Specifications)
             .Include(p => p.CareInstructions)
             .Where(p => p.IsActive)
@@ -456,22 +465,17 @@ public class ProductService(AppDbContext context) : IProductService
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var existingProduct = await context.Products
-            .Include(p => p.Images)
-            .Include(p => p.Colors)
-            .Include(p => p.Sizes)
-            .Include(p => p.Variants)
-            .Include(p => p.Features)
-            .Include(p => p.Specifications)
-            .Include(p => p.CareInstructions)
-            .FirstOrDefaultAsync(p => p.Id == id);
+        var existingProduct = await context.Products.FindAsync(id);
 
         if (existingProduct == null)
         {
             return false;
         }
 
-        context.Products.Remove(existingProduct);
+        // Soft delete: Mark as archived and inactive
+        existingProduct.Status = "archived";
+        existingProduct.IsActive = false;
+
         await context.SaveChangesAsync();
 
         return true;

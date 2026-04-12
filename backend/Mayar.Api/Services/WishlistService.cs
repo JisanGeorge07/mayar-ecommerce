@@ -72,7 +72,7 @@ public class WishlistService(AppDbContext context) : IWishlistService
             PriceINR = variant.BasePriceINR ?? variant.Product?.BasePriceINR,
             CompareAtPriceKWD = variant.CompareAtPriceKWD ?? variant.Product?.CompareAtPriceKWD,
             CompareAtPriceINR = variant.CompareAtPriceINR ?? variant.Product?.CompareAtPriceINR,
-            ImageUrl = primaryImage?.ImageUrl
+            ImageUrl = !string.IsNullOrEmpty(variant.ImageUrl) ? variant.ImageUrl : primaryImage?.ImageUrl
         };
 
         context.Wishlists.Add(wishlist);

@@ -17,7 +17,7 @@ public class MiddleCategory
     public string? ButtonTextEnglish { get; set; }
     public string? ButtonTextArabic { get; set; }
     public string? ButtonLink { get; set; }
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
     public long? DisplayOrder { get; set; }
 
     // Navigation properties

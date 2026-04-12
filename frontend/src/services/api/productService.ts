@@ -79,11 +79,15 @@ export interface ProductImageDto {
 export interface ProductFeatureDto {
   id: string;
   productId: string;
-  iconName?: string;
-  imageAlt?: string;
+  trustBadgeId: string;
+  isActive: boolean;
+  // Trust badge details (populated from backend)
+  key?: string;
   labelEnglish?: string;
   labelArabic?: string;
-  isActive: boolean;
+  descriptionEnglish?: string;
+  descriptionArabic?: string;
+  iconName?: string;
 }
 
 export interface ProductSpecificationDto {
@@ -116,6 +120,7 @@ export interface ProductVariantDto {
   stockQuantity?: number;
   inStock: boolean;
   isDefault: boolean;
+  imageUrl?: string;
   color?: ProductColorDto;
   size?: ProductSizeDto;
 }

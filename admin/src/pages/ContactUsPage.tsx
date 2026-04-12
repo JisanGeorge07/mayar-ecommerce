@@ -63,7 +63,7 @@ export default function ContactUsPage() {
     toast.success(status === 'published' ? 'Contact Us page published' : 'Draft saved successfully');
   };
 
-  if (!data) return <AdminLayout><div className="p-6">Loading...</div></AdminLayout>;
+  if (!data) return <AdminLayout></AdminLayout>;
 
   return (
     <AdminLayout>

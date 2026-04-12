@@ -14,14 +14,39 @@ interface ProductPreviewProps {
 }
 
 export default function ProductPreview({ form, categoryName, subcategoryName, productTypeName, onClose }: ProductPreviewProps) {
-  const { basic, colors, sizes, images, details, specifications, careInstructions, features, reviews } = form;
+  const { basic, colors, sizes, images, details, specifications, careInstructions, features, reviews, variants } = form;
   const [selectedColor, setSelectedColor] = React.useState(colors[0]?.nameEnglish || '');
   const [selectedSize, setSelectedSize] = React.useState(sizes[0]?.label || '');
   const [selectedImageIdx, setSelectedImageIdx] = React.useState(0);
+  const [viewingVariantImage, setViewingVariantImage] = React.useState(true);
   const [qty, setQty] = React.useState(1);
 
-  const discountPct = basic.compare_price_kwd && basic.base_price_kwd
-    ? Math.round(((basic.compare_price_kwd - basic.base_price_kwd) / basic.compare_price_kwd) * 100)
+  const currentColor = colors.find(c => c.nameEnglish === selectedColor);
+  const currentSize = sizes.find(s => s.label === selectedSize);
+  const currentVariant = variants?.find(
+    v => (!currentColor || v.productColorId === currentColor.id) &&
+         (!currentSize || v.productSizeId === currentSize.id)
+  );
+
+  let variantImageUrl = currentVariant?.imageUrl;
+  if (currentVariant?.imageFile) {
+    try {
+      variantImageUrl = URL.createObjectURL(currentVariant.imageFile);
+    } catch(e) {}
+  }
+
+  let displayImage = images[selectedImageIdx]?.url;
+  if (viewingVariantImage && variantImageUrl) {
+    displayImage = variantImageUrl;
+  } else if (!displayImage && variantImageUrl) {
+    displayImage = variantImageUrl;
+  }
+
+  const displayPriceKwd = currentVariant?.basePriceKWD || basic.base_price_kwd || 0;
+  const displayComparePriceKwd = currentVariant?.compareAtPriceKWD || basic.compare_price_kwd || 0;
+
+  const discountPct = displayComparePriceKwd && displayPriceKwd
+    ? Math.round(((displayComparePriceKwd - displayPriceKwd) / displayComparePriceKwd) * 100)
     : 0;
 
   const hasColors = colors.filter(c => c.nameEnglish).length > 0;
@@ -32,7 +57,7 @@ export default function ProductPreview({ form, categoryName, subcategoryName, pr
   const filledSpecs = specifications.filter(s => s.labelEnglish && s.valueEnglish);
   const filledCare = careInstructions.filter(c => c.instructionEnglish?.trim());
 
-  const activeFeatures = features.filter(f => f.isActive && f.labelEnglish);
+  const activeFeatures = features.filter(f => f.isActive && (f.labelEnglish || f.trustBadgeId));
 
   return (
     <div className="rounded-lg border border-border bg-card shadow-lg overflow-hidden animate-fade-in">
@@ -57,8 +82,8 @@ export default function ProductPreview({ form, categoryName, subcategoryName, pr
           {/* Gallery */}
           <div className="space-y-3">
             <div className="aspect-square rounded-lg border border-border bg-muted overflow-hidden">
-              {images.length > 0 ? (
-                <img src={images[selectedImageIdx]?.url} alt={images[selectedImageIdx]?.alt_text} className="h-full w-full object-cover" />
+              {displayImage ? (
+                <img src={displayImage} alt={images[selectedImageIdx]?.alt_text || 'Product Preview'} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center text-muted-foreground text-sm">No image uploaded</div>
               )}
@@ -68,8 +93,11 @@ export default function ProductPreview({ form, categoryName, subcategoryName, pr
                 {images.map((img, i) => (
                   <button
                     key={img.id}
-                    onClick={() => setSelectedImageIdx(i)}
-                    className={`h-16 w-16 shrink-0 rounded-md border overflow-hidden ${i === selectedImageIdx ? 'border-primary ring-1 ring-primary' : 'border-border'}`}
+                    onClick={() => {
+                      setSelectedImageIdx(i);
+                      setViewingVariantImage(false);
+                    }}
+                    className={`h-16 w-16 shrink-0 rounded-md border overflow-hidden ${i === selectedImageIdx && !viewingVariantImage ? 'border-primary ring-1 ring-primary' : 'border-border'}`}
                   >
                     <img src={img.url} alt={img.alt_text} className="h-full w-full object-cover" />
                   </button>
@@ -97,9 +125,9 @@ export default function ProductPreview({ form, categoryName, subcategoryName, pr
 
             {/* Price */}
             <div className="flex items-baseline gap-3">
-              <span className="text-2xl font-bold text-foreground">{basic.base_price_kwd || 0} KWD</span>
-              {basic.compare_price_kwd ? (
-                <span className="text-lg text-muted-foreground line-through">{basic.compare_price_kwd} KWD</span>
+              <span className="text-2xl font-bold text-foreground">{displayPriceKwd} KWD</span>
+              {displayComparePriceKwd > 0 ? (
+                <span className="text-lg text-muted-foreground line-through">{displayComparePriceKwd} KWD</span>
               ) : null}
               {discountPct > 0 && (
                 <span className="rounded bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary">{discountPct}% OFF</span>
@@ -116,7 +144,10 @@ export default function ProductPreview({ form, categoryName, subcategoryName, pr
                   {colors.filter(c => c.nameEnglish).map(c => (
                     <button
                       key={c.id}
-                      onClick={() => setSelectedColor(c.nameEnglish)}
+                      onClick={() => {
+                        setSelectedColor(c.nameEnglish);
+                        setViewingVariantImage(true);
+                      }}
                       className={`h-8 w-8 rounded-full border-2 ${selectedColor === c.nameEnglish ? 'border-primary ring-2 ring-primary/30' : 'border-border'}`}
                       style={{ backgroundColor: c.hex }}
                       title={c.nameEnglish}
@@ -131,15 +162,39 @@ export default function ProductPreview({ form, categoryName, subcategoryName, pr
               <div>
                 <p className="text-sm font-medium text-foreground mb-2">Size</p>
                 <div className="flex flex-wrap gap-2">
-                  {sizes.filter(s => s.label).map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => setSelectedSize(s.label)}
-                      className={`rounded-md border px-4 py-2 text-sm font-medium transition-colors ${selectedSize === s.label ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-foreground hover:border-primary'}`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
+                  {sizes.filter(s => s.label).map(s => {
+                    const variantForSize = variants?.find(
+                      v => (!currentColor || v.productColorId === currentColor.id) && v.productSizeId === s.id
+                    );
+                    const isOutOfStock = variantForSize ? (!variantForSize.inStock || variantForSize.stockQuantity <= 0) : false;
+
+                    return (
+                      <button
+                        key={s.id}
+                        disabled={isOutOfStock}
+                        onClick={() => {
+                          if (isOutOfStock) return;
+                          setSelectedSize(s.label);
+                          setViewingVariantImage(true);
+                        }}
+                        className={`relative overflow-hidden rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
+                          isOutOfStock 
+                            ? 'opacity-50 cursor-not-allowed border-border text-muted-foreground bg-muted/50' 
+                            : selectedSize === s.label 
+                              ? 'border-primary bg-primary text-primary-foreground' 
+                              : 'border-border text-foreground hover:border-primary'
+                        }`}
+                        title={isOutOfStock ? "Out of stock" : s.label}
+                      >
+                        {s.label}
+                        {isOutOfStock && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-full h-px bg-muted-foreground/80 rotate-[-25deg] scale-x-150"></div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

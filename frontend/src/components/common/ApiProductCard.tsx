@@ -30,7 +30,11 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
     return lang === 'ar' ? (ar || en || '') : (en || ar || '');
   };
 
-  const primaryImg = product.images?.find(i => i.imageUrl) || product.images?.[0];
+  // Use default variant image if available, otherwise fall back to product images
+  const variantImageUrl = defaultVariant?.imageUrl;
+  const productImg = product.images?.find(i => i.imageUrl) || product.images?.[0];
+  const displayImageUrl = variantImageUrl || productImg?.imageUrl || '/placeholder.png';
+  const displayImageAlt = productImg?.imageAlt || getText(product.nameEnglish, product.nameArabic);
 
   // Use variant price if available, otherwise fall back to product base price
   const basePriceKWD = defaultVariant?.basePriceKWD ?? product.basePriceKWD;
@@ -75,8 +79,8 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
         {/* Image */}
         <Link to={`/product/${product.slug}`} className="block relative aspect-[3/4] overflow-hidden bg-secondary">
           <img
-            src={primaryImg?.imageUrl || '/placeholder.png'}
-            alt={primaryImg?.imageAlt || getText(product.nameEnglish, product.nameArabic)}
+            src={displayImageUrl}
+            alt={displayImageAlt}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
@@ -118,7 +122,7 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
 
           {/* Rating */}
           {product.rating !== undefined && (
-            <div className="flex items-center gap-1 mb-1.5">
+            <div className="flex items-center gap-1 mb-1.5 mt-6">
               <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map(star => (
                   <Star
@@ -141,7 +145,7 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
           </div>
 
           {/* Color swatches + Cart button */}
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between mt-4">
             <div className="flex items-center gap-1 min-w-0">
               {product.colors && product.colors.length > 0 && (
                 <>

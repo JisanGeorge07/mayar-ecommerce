@@ -204,10 +204,6 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">Loading settings...</span>
-        </div>
       </AdminLayout>
     );
   }

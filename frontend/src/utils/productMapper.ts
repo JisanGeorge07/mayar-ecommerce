@@ -1,6 +1,30 @@
 import type { ProductDto } from '@/services/api/productService';
 import type { ProductItem, ProductImage, ProductColor, ProductSize, ProductFeature, ProductVariant } from '@/types/product';
 
+const STANDARD_SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL', 'OS'];
+
+export const sortSizes = (a: { label: string }, b: { label: string }) => {
+  const labelA = a.label?.trim().toUpperCase() || '';
+  const labelB = b.label?.trim().toUpperCase() || '';
+
+  const numA = parseFloat(labelA);
+  const numB = parseFloat(labelB);
+
+  // If both are purely numbers (or strings that are valid numbers), sort numerically
+  if (!isNaN(numA) && !isNaN(numB) && labelA == numA.toString() && labelB == numB.toString()) {
+    return numA - numB;
+  }
+
+  const indexA = STANDARD_SIZE_ORDER.indexOf(labelA);
+  const indexB = STANDARD_SIZE_ORDER.indexOf(labelB);
+
+  if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+  if (indexA !== -1) return -1;
+  if (indexB !== -1) return 1;
+
+  return labelA.localeCompare(labelB);
+};
+
 export const mapProductDtoToProductItem = (dto: ProductDto): ProductItem => {
   // Map images
   const images: ProductImage[] = (dto.images || [])
@@ -24,6 +48,7 @@ export const mapProductDtoToProductItem = (dto: ProductDto): ProductItem => {
   // Map sizes
   const sizes: ProductSize[] = (dto.sizes || [])
     .filter(s => s.isActive)
+    .sort(sortSizes)
     .map(s => ({
       id: s.id,
       label: s.label || '',

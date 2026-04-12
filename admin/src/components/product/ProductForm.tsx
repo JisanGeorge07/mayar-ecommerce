@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Upload, Eye, ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, ImageIcon, Loader2 } from 'lucide-react';
 import { calcDiscountPercent } from '@/utils/slug';
 import {
   AlertDialog,
@@ -64,6 +64,8 @@ interface ProductFormProps {
   subcategoryName: string;
   productTypeName: string;
   viewOnly?: boolean;
+  isSavingDraft?: boolean;
+  isPublishing?: boolean;
 }
 
 export default function ProductForm({
@@ -82,6 +84,8 @@ export default function ProductForm({
   onSaveDraft, onPublish, onPreview,
   categoryName, subcategoryName, productTypeName,
   viewOnly = false,
+  isSavingDraft = false,
+  isPublishing = false,
 }: ProductFormProps) {
   const [activeTab, setActiveTab] = useState('basic');
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -1156,11 +1160,19 @@ export default function ProductForm({
             </Button>
           ) : (
             <>
-              {onSaveDraft && <Button variant="outline" size="sm" onClick={onSaveDraft}>Save Draft</Button>}
-              <Button variant="outline" size="sm" onClick={onPreview}>
+              {onSaveDraft && (
+                <Button variant="outline" size="sm" onClick={onSaveDraft} disabled={isSavingDraft || isPublishing}>
+                  {isSavingDraft ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Draft'}
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={onPreview} disabled={isSavingDraft || isPublishing}>
                 <Eye className="h-4 w-4 mr-1" /> Preview
               </Button>
-              {onPublish && <Button size="sm" onClick={onPublish}>Publish Product</Button>}
+              {onPublish && (
+                <Button size="sm" onClick={onPublish} disabled={isSavingDraft || isPublishing}>
+                  {isPublishing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</> : 'Publish Product'}
+                </Button>
+              )}
             </>
           )}
         </div>

@@ -24,7 +24,7 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const load = async () => {
-    // setLoading(true);
+    setLoading(true);
     try {
       const [cats, subs, pts, prods] = await Promise.all([
         categoryService.getCategories(),
@@ -40,9 +40,9 @@ export default function ProductsPage() {
       console.error('Failed to load data:', error);
       toast.error('Failed to load products');
     } 
-    // finally {
-    //   setLoading(false);
-    // }
+    finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -164,12 +164,12 @@ export default function ProductsPage() {
 
         {/* Loading state */}
         {
-        // loading ? (
-        //   <div className="rounded-lg border border-border bg-card p-12 shadow-sm text-center">
-        //     <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-        //     <p className="text-sm text-muted-foreground">Loading products...</p>
-        //   </div>
-        // ) :
+        loading ? (
+          <div className="rounded-lg border border-border bg-card p-12 shadow-sm text-center">
+            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">Loading products...</p>
+          </div>
+        ) :
          filtered.length === 0 ? (
           /* Empty state */
           <div className="rounded-lg border border-border bg-card p-12 shadow-sm text-center">

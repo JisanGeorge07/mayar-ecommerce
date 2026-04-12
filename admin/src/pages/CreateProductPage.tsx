@@ -34,6 +34,9 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
   const [loading, setLoading] = useState(!!id);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+
   // Load existing product when editing
   useEffect(() => {
     if (id) {
@@ -336,7 +339,7 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
             stockQuantity: variant.stockQuantity,
             inStock: variant.inStock,
             isDefault: variant.isDefault,
-            imageFile: variant.imageFile,                   
+            imageFile: variant.imageFile,
           });
         } else {
           // Existing variant - check if it changed
@@ -524,6 +527,8 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
   };
 
   const handleSaveDraft = async () => {
+    if (isSavingDraft || isPublishing) return;
+    setIsSavingDraft(true);
     // Build the updated form directly (don't rely on async state)
     const updatedForm: ProductFormState = {
       ...productForm.form,
@@ -553,10 +558,14 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
     } catch (error) {
       console.error('Failed to save draft:', error);
       toast.error('Failed to save draft');
+    } finally {
+      setIsSavingDraft(false);
     }
   };
 
   const handlePublish = async () => {
+    if (isSavingDraft || isPublishing) return;
+    setIsPublishing(true);
     // Build the updated form directly (don't rely on async state)
     const updatedForm: ProductFormState = {
       ...productForm.form,
@@ -587,6 +596,8 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
     } catch (error) {
       console.error('Failed to publish product:', error);
       toast.error('Failed to publish product');
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -679,6 +690,8 @@ export default function CreateProductPage({ viewOnly = false }: CreateProductPag
             subcategoryName={hierarchy.selectedSubcategory?.titleEnglish || ''}
             productTypeName={hierarchy.selectedProductType?.titleEnglish || ''}
             viewOnly={viewOnly}
+            isSavingDraft={isSavingDraft}
+            isPublishing={isPublishing}
           />
         )}
 

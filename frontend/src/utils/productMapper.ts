@@ -37,8 +37,16 @@ export const mapProductDtoToProductItem = (dto: ProductDto): ProductItem => {
     }));
 
   // Map colors
+  const defaultVariant = dto.variants?.find(v => v.isDefault) || dto.variants?.[0];
+  const defaultColorId = defaultVariant?.productColorId;
+  
   const colors: ProductColor[] = (dto.colors || [])
     .filter(c => c.isActive)
+    .sort((a, b) => {
+      if (a.id === defaultColorId) return -1;
+      if (b.id === defaultColorId) return 1;
+      return 0;
+    })
     .map(c => ({
       id: c.id,
       name: { en: c.nameEnglish || '', ar: c.nameArabic || '' },

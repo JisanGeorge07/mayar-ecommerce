@@ -51,6 +51,21 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
   // Check if product has variants (colors or sizes)
   const hasVariants = (product.colors && product.colors.length > 0) || (product.sizes && product.sizes.length > 0);
 
+  // Sort colors to prioritize default variant
+  const displayColors = useMemo(() => {
+    const colors = product.colors || [];
+    if (colors.length <= 1) return colors;
+    
+    const defaultColorId = defaultVariant?.productColorId;
+    if (!defaultColorId) return colors;
+    
+    return [...colors].sort((a, b) => {
+      if (a.id === defaultColorId) return -1;
+      if (b.id === defaultColorId) return 1;
+      return 0;
+    });
+  }, [product.colors, defaultVariant]);
+
   // Convert to ProductItem for QuickAddPopup (only when popup is open to avoid unnecessary computation)
   const productItem = useMemo(() => {
     if (!quickAddOpen && !wishlistPopupOpen) return null;
@@ -147,9 +162,9 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
           {/* Color swatches + Cart button */}
           <div className="flex items-center justify-between mt-4">
             <div className="flex items-center gap-1 min-w-0">
-              {product.colors && product.colors.length > 0 && (
+              {displayColors.length > 0 && (
                 <>
-                  {product.colors.slice(0, 5).map(color => (
+                  {displayColors.slice(0, 5).map(color => (
                     <span
                       key={color.id}
                       className="w-3.5 h-3.5 rounded-full border border-border flex-shrink-0"
@@ -157,8 +172,8 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
                       title={getText(color.nameEnglish, color.nameArabic)}
                     />
                   ))}
-                  {product.colors.length > 5 && (
-                    <span className="text-[10px] text-muted-foreground">+{product.colors.length - 5}</span>
+                  {displayColors.length > 5 && (
+                    <span className="text-[10px] text-muted-foreground">+{displayColors.length - 5}</span>
                   )}
                 </>
               )}

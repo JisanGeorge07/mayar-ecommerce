@@ -44,9 +44,11 @@ interface ProductInfoProps {
   product: ProductItem;
   selectedColor?: string;
   onColorChange?: (colorId: string) => void;
+  selectedSize?: string;
+  onSizeChange?: (sizeId: string) => void;
 }
 
-const ProductInfo = ({ product, selectedColor: controlledColor, onColorChange }: ProductInfoProps) => {
+const ProductInfo = ({ product, selectedColor: controlledColor, onColorChange, selectedSize: controlledSize, onSizeChange }: ProductInfoProps) => {
   const { t, formatPrice, lang, getPrice } = useLocale();
   const { settings } = useSettings();
   const { isLoggedIn } = useAuth();
@@ -70,7 +72,13 @@ const ProductInfo = ({ product, selectedColor: controlledColor, onColorChange }:
     onColorChange?.(colorId);
   };
 
-  const [selectedSize, setSelectedSize] = useState('');
+  const [internalSize, setInternalSize] = useState('');
+  const selectedSize = controlledSize ?? internalSize;
+  const setSelectedSize = (sizeId: string) => {
+    setInternalSize(sizeId);
+    onSizeChange?.(sizeId);
+  };
+
   const [quantity, setQuantity] = useState(1);
   const [shareOpen, setShareOpen] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);

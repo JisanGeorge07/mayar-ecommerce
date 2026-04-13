@@ -29,6 +29,7 @@ const ProductPage = () => {
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [recentlyViewedLoading, setRecentlyViewedLoading] = useState(false);
   const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Track if we've already added this product to recently viewed
@@ -57,6 +58,7 @@ const ProductPage = () => {
         // Set initial selectedColor from default variant
         const defaultVar = mapped.variants?.find(v => v.isDefault) || mapped.variants?.[0];
         setSelectedColor(defaultVar?.colorId || mapped.colors[0]?.id || '');
+        setSelectedSize('');
       } else {
         setError('Product not found');
       }
@@ -198,11 +200,14 @@ const ProductPage = () => {
             images={product.images}
             variants={product.variants}
             selectedColor={selectedColor}
+            selectedSize={selectedSize}
           />
           <ProductInfo
             product={product}
             selectedColor={selectedColor}
             onColorChange={setSelectedColor}
+            selectedSize={selectedSize}
+            onSizeChange={setSelectedSize}
           />
         </div>
 

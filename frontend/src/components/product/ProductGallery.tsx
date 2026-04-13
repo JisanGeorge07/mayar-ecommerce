@@ -7,9 +7,10 @@ interface ProductGalleryProps {
   images: ProductImage[];
   variants?: ProductVariant[];
   selectedColor?: string;
+  selectedSize?: string;
 }
 
-const ProductGallery = ({ images, variants = [], selectedColor }: ProductGalleryProps) => {
+const ProductGallery = ({ images, variants = [], selectedColor, selectedSize }: ProductGalleryProps) => {
   const { t, dir } = useLocale();
   const [active, setActive] = useState(0);
 
@@ -17,37 +18,52 @@ const ProductGallery = ({ images, variants = [], selectedColor }: ProductGallery
   // 1. If variants have images, show variant images (filtered by selected color if applicable)
   // 2. Fall back to product images if no variant images exist
   const displayImages = useMemo(() => {
-    // Collect all variant images
-    const variantImages: ProductImage[] = variants
-      .filter(v => v.imageUrl)
-      .map(v => ({
-        id: `variant-${v.id}`,
-        url: v.imageUrl!,
-        alt: { en: '', ar: '' },
-        colorId: v.colorId,
-      }));
+    // Collect all variant images, deduplicating by URL so we don't show identical thumbnails
+    const variantImages: ProductImage[] = [];
+    const seenUrls = new Set<string>();
+
+    for (const v of variants) {
+      if (v.imageUrl && !seenUrls.has(v.imageUrl)) {
+        seenUrls.add(v.imageUrl);
+        variantImages.push({
+          id: `variant-${v.id}`,
+          url: v.imageUrl,
+          alt: { en: '', ar: '' },
+          colorId: v.colorId,
+        });
+      }
+    }
 
     if (variantImages.length === 0) {
       // No variant images exist — use product images only
       return images;
     }
 
-    // Variant images exist — show ONLY variant images (no product images)
+    // Variant images exist — show ONLY variant images that match the selected color
     if (selectedColor) {
-      const selectedVariantImage = variantImages.find(img => img.colorId === selectedColor);
-      const otherVariantImages = variantImages.filter(img => img.colorId !== selectedColor);
-      return selectedVariantImage
-        ? [selectedVariantImage, ...otherVariantImages]
-        : variantImages;
+      const selectedColorImages = variantImages.filter(img => img.colorId === selectedColor);
+      return selectedColorImages.length > 0 ? selectedColorImages : variantImages;
     }
 
     return variantImages;
   }, [variants, images, selectedColor]);
 
-  // Reset active index to 0 when selectedColor changes (to show the matching variant image)
+  // Update active index when size changes or selectedColor changes
   useEffect(() => {
+    if (selectedSize && selectedColor && variants.length > 0) {
+      // Find the variant matching the selected color AND size
+      const targetVariant = variants.find(v => v.colorId === selectedColor && v.sizeId === selectedSize);
+      if (targetVariant?.imageUrl) {
+        // Find this exact image URL in our displayImages gallery
+        const idx = displayImages.findIndex(img => img.url === targetVariant.imageUrl);
+        if (idx !== -1) {
+          setActive(idx);
+          return;
+        }
+      }
+    }
     setActive(0);
-  }, [selectedColor]);
+  }, [selectedColor, selectedSize, displayImages, variants]);
 
   const prev = () => setActive(i => (i - 1 + displayImages.length) % displayImages.length);
   const next = () => setActive(i => (i + 1) % displayImages.length);

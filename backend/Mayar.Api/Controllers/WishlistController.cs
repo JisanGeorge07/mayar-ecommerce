@@ -47,7 +47,7 @@ namespace Mayar.Api.Controllers
         {
             try
             {
-                var created = await wishlistService.CreateAsync(request.UserId, request.ProductVariantId);
+                var created = await wishlistService.CreateAsync(request.UserId, request.ProductId, request.ProductVariantId);
                 return CreatedAtAction(nameof(GetById), new { id = created.Id },
                     new ApiResponse<WishlistDto>
                     {
@@ -134,6 +134,7 @@ namespace Mayar.Api.Controllers
     public class CreateWishlistRequest
     {
         public Guid UserId { get; set; }
-        public Guid ProductVariantId { get; set; }
+        public Guid ProductId { get; set; }
+        public Guid? ProductVariantId { get; set; }
     }
 }

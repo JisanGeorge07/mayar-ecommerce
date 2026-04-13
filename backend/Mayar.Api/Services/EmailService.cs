@@ -218,6 +218,12 @@ public class EmailService : IEmailService
                                                     <p style=""margin: 0; font-size: 16px; color: #1f2937; font-weight: 600;"">{order.CreatedAt:MMM dd, yyyy}</p>
                                                 </td>
                                             </tr>
+                                            <tr>
+                                                <td style=""width: 100%;"">
+                                                    <p style=""margin: 0 0 4px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;"">Tracking Number</p>
+                                                    <p style=""margin: 0; font-size: 16px; color: #1f2937; font-weight: 600;"">#{order.TrackingId}</p>
+                                                </td>
+                                            </tr>
                                         </table>
                                     </td>
                                 </tr>

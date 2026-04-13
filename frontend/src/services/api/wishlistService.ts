@@ -12,7 +12,7 @@ export interface WishlistDto {
   brand?: string;
   productSlug?: string;
   // Variant specific details
-  productVariantId: string;
+  productVariantId?: string;
   colorNameEnglish?: string;
   colorNameArabic?: string;
   colorHex?: string;
@@ -27,7 +27,8 @@ export interface WishlistDto {
 
 export interface CreateWishlistRequest {
   userId: string;
-  productVariantId: string;
+  productId: string;
+  productVariantId?: string;
 }
 
 export interface ApiResponse<T> {

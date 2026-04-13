@@ -9,7 +9,7 @@ const STORAGE_KEY_GUEST = 'mayar_wishlist_guest';
 // Guest wishlist item structure (stores variant info for merging)
 interface GuestWishlistItem {
   productId: string;
-  productVariantId: string;
+  productVariantId?: string;
 }
 
 // Item format expected by AccountWishlist component
@@ -137,6 +137,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         await wishlistApi.create({
           userId: user.id,
+          productId: guestItem.productId,
           productVariantId: guestItem.productVariantId,
         });
       } catch (error) {
@@ -246,21 +247,40 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setWishlistIds(prev => prev.filter(id => id !== productId));
         setGuestWishlistItems(prev => prev.filter(item => item.productId !== productId));
       }
+    } else if (isLoggedIn && isProductInWishlist && !productVariantId) {
+      // For logged-in users, if no variantId provided, remove all variants of this product
+      if (user?.id) {
+        // Find all variant IDs for this product in wishlist
+        const variantIdsToRemove = wishlistItems
+          .filter(item => item.productId === productId)
+          .map(item => item.productVariantId);
+
+        // Optimistically update UI
+        setWishlistVariantIds(prev => prev.filter(id => !variantIdsToRemove.includes(id)));
+        setWishlistItems(prev => prev.filter(item => item.productId !== productId));
+        setWishlistIds(prev => prev.filter(id => id !== productId));
+
+        try {
+          await wishlistApi.removeByUserAndProduct(user.id, productId);
+        } catch (error) {
+          console.error('Failed to remove all variants from wishlist:', error);
+          // Revert by refreshing
+          await loadWishlist();
+        }
+      }
     } else {
       // Adding to wishlist
       if (isLoggedIn && user?.id) {
-        if (!productVariantId) {
-          console.error('productVariantId is required for logged-in users');
-          return;
-        }
-
         // Optimistically update UI
         setWishlistIds(prev => prev.includes(productId) ? prev : [...prev, productId]);
-        setWishlistVariantIds(prev => [...prev, productVariantId]);
+        if (productVariantId) {
+          setWishlistVariantIds(prev => [...prev, productVariantId]);
+        }
 
         try {
           const response = await wishlistApi.create({
             userId: user.id,
+            productId,
             productVariantId,
           });
           if (response.success && response.data) {
@@ -269,7 +289,9 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         } catch (error) {
           console.error('Failed to add to wishlist:', error);
           // Revert optimistic update on error
-          setWishlistVariantIds(prev => prev.filter(id => id !== productVariantId));
+          if (productVariantId) {
+            setWishlistVariantIds(prev => prev.filter(id => id !== productVariantId));
+          }
           // Only remove productId if no other variants of this product are in wishlist
           const hasOtherVariants = wishlistItems.some(
             item => item.productId === productId && item.productVariantId !== productVariantId
@@ -281,15 +303,14 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } else {
         // Non-logged-in user - store both productId and variantId for later merge
         setWishlistIds(prev => prev.includes(productId) ? prev : [...prev, productId]);
-        if (productVariantId) {
-          setGuestWishlistItems(prev => {
-            // Don't add duplicate variants
-            if (prev.some(item => item.productVariantId === productVariantId)) {
-              return prev;
-            }
-            return [...prev, { productId, productVariantId }];
-          });
-        }
+        setGuestWishlistItems(prev => {
+          // Check for duplicate (matching both product and variant)
+          const isDuplicate = prev.some(
+            item => item.productId === productId && item.productVariantId === productVariantId
+          );
+          if (isDuplicate) return prev;
+          return [...prev, { productId, productVariantId }];
+        });
       }
     }
   }, [isLoggedIn, user?.id, wishlistIds, wishlistVariantIds, wishlistItems, guestWishlistItems]);
@@ -327,6 +348,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } else {
       // For non-logged-in users, remove by ID (which is productId in this case)
       setWishlistIds(prev => prev.filter(pid => pid !== id));
+      setGuestWishlistItems(prev => prev.filter(item => item.productId !== id));
     }
   }, [isLoggedIn, user?.id, wishlistItems]);
 
@@ -356,7 +378,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleWishlist,
         removeFromWishlist,
         clearWishlist,
-        count: wishlistItems.length || wishlistIds.length,
+        count: isLoggedIn ? wishlistItems.length : guestWishlistItems.length,
         loading,
         refreshWishlist
       }}

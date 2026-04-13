@@ -25,7 +25,7 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
   // Find default variant for pricing and wishlist
   const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
 
-  const liked = isInWishlist(product.id, defaultVariant?.id);
+  const liked = isInWishlist(product.id);
   const getText = (en?: string, ar?: string) => {
     return lang === 'ar' ? (ar || en || '') : (en || ar || '');
   };
@@ -48,17 +48,17 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
     ? Math.round((1 - basePrice / comparePrice) * 100)
     : 0;
 
-  // Check if product has variants (colors or sizes)
-  const hasVariants = (product.colors && product.colors.length > 0) || (product.sizes && product.sizes.length > 0);
+  // Check if product has selectable variants (more than one color or size)
+  const hasVariants = (product.colors && product.colors.length > 1) || (product.sizes && product.sizes.length > 1);
 
   // Sort colors to prioritize default variant
   const displayColors = useMemo(() => {
     const colors = product.colors || [];
     if (colors.length <= 1) return colors;
-    
+
     const defaultColorId = defaultVariant?.productColorId;
     if (!defaultColorId) return colors;
-    
+
     return [...colors].sort((a, b) => {
       if (a.id === defaultColorId) return -1;
       if (b.id === defaultColorId) return 1;
@@ -81,10 +81,15 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (hasVariants && !liked) {
-      setWishlistPopupOpen(true);
+    if (!liked) {
+      if (hasVariants) {
+        setWishlistPopupOpen(true);
+      } else {
+        toggleWishlist(product.id, defaultVariant?.id);
+      }
     } else {
-      toggleWishlist(product.id, defaultVariant?.id);
+      // If already liked, remove everything for this product
+      toggleWishlist(product.id);
     }
   };
 

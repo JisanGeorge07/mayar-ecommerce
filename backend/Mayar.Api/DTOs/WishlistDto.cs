@@ -15,7 +15,7 @@ public class WishlistDto
     public string? ProductSlug { get; set; }
 
     // Variant specific details
-    public Guid ProductVariantId { get; set; }
+    public Guid? ProductVariantId { get; set; }
     public string? ColorNameEnglish { get; set; }
     public string? ColorNameArabic { get; set; }
     public string? ColorHex { get; set; }

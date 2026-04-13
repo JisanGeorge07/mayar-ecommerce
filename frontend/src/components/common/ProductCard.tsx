@@ -28,10 +28,10 @@ const ProductCard = ({ product, compact }: ProductCardProps) => {
 
   const [wishlistPopupOpen, setWishlistPopupOpen] = useState(false);
 
-  const liked = isInWishlist(product.id, defaultVariant?.id);
+  const liked = isInWishlist(product.id);
 
-  // Check if product has variants (colors or sizes)
-  const hasVariants = (product.colors && product.colors.length > 0) || (product.sizes && product.sizes.length > 0);
+  // Check if product has selectable variants (more than one color or size)
+  const hasVariants = (product.colors && product.colors.length > 1) || (product.sizes && product.sizes.length > 1);
 
   // Use variant price if available, otherwise fall back to product base price
   const basePriceKWD = defaultVariant?.basePriceKWD ?? product.basePriceKWD;
@@ -48,10 +48,15 @@ const ProductCard = ({ product, compact }: ProductCardProps) => {
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (hasVariants && !liked) {
-      setWishlistPopupOpen(true);
+    if (!liked) {
+      if (hasVariants) {
+        setWishlistPopupOpen(true);
+      } else {
+        toggleWishlist(product.id, defaultVariant?.id);
+      }
     } else {
-      toggleWishlist(product.id, defaultVariant?.id);
+      // If already liked, remove everything for this product
+      toggleWishlist(product.id);
     }
   };
 

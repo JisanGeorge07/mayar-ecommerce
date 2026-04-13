@@ -16,8 +16,8 @@ public class Wishlist
     public string? ProductSlug { get; set; }
 
     // Variant specific details
-    public Guid ProductVariantId { get; set; }
-    public ProductVariant ProductVariant { get; set; } = null!;
+    public Guid? ProductVariantId { get; set; }
+    public ProductVariant? ProductVariant { get; set; }
 
     // Stored variant details for performance
     public string? ColorNameEnglish { get; set; }

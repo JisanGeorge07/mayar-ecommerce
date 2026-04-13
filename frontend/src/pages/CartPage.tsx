@@ -123,7 +123,7 @@ const CartPage = () => {
                       {item.brand && (
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">{t(item.brand)}</p>
                       )}
-                      <Link to={`/product/${item.productId}`} className="text-sm font-medium text-foreground hover:text-brand transition-colors line-clamp-2">
+                      <Link to={`/product/${item.productSlug}`} className="text-sm font-medium text-foreground hover:text-brand transition-colors line-clamp-2">
                         {t(item.name)}
                       </Link>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-muted-foreground">

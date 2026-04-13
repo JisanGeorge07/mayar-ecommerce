@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Ban } from 'lucide-react';
+import { Plus, Pencil, Ban, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateSlug } from '@/utils/slug';
 import type { TopCategory, MiddleCategory, BottomCategory } from '@/types';
@@ -147,6 +147,17 @@ export default function ProductTypesPage() {
     load();
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product type?')) return;
+    try {
+      await bottomCategoryService.delete(id);
+      toast.success('Product type deleted');
+      load();
+    } catch {
+      toast.error('Failed to delete product type');
+    }
+  };
+
   const formSubs = formCatId
     ? subcategories.filter(s => s.topCategoryId === formCatId)
     : subcategories;
@@ -219,6 +230,9 @@ export default function ProductTypesPage() {
                           <Ban className="h-3.5 w-3.5" />
                         </Button>
                       )}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(pt.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </td>
                 </tr>

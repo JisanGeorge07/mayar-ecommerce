@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Ban } from 'lucide-react';
+import { Plus, Pencil, Ban, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateSlug } from '@/utils/slug';
 import type { TopCategory, MiddleCategory } from '@/types';
@@ -116,6 +116,17 @@ export default function SubcategoriesPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this subcategory?')) return;
+    try {
+      await middleCategoryService.delete(id);
+      toast.success('Subcategory deleted');
+      load();
+    } catch {
+      toast.error('Failed to delete');
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -177,6 +188,9 @@ export default function SubcategoriesPage() {
                             <Ban className="h-3.5 w-3.5" />
                           </Button>
                         )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(sub.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -207,12 +221,12 @@ export default function SubcategoriesPage() {
 
             <div className="space-y-1.5">
               <Label>Sub Category Name (EN)</Label>
-              <Input value={form.nameEnglish} onChange={e => setForm(f => ({ ...f, nameEnglish: e.target.value, slug: generateSlug(e.target.value) }))} placeholder='e.g. Dresses'/>
+              <Input value={form.nameEnglish} onChange={e => setForm(f => ({ ...f, nameEnglish: e.target.value, slug: generateSlug(e.target.value) }))} placeholder='e.g. Dresses' />
             </div>
 
             <div className="space-y-1.5">
               <Label>Sub Category Name (AR)</Label>
-              <Input value={form.nameArabic} onChange={e => setForm(f => ({ ...f, nameArabic: e.target.value }))} dir='rtl' placeholder='e.g. فساتين'/>
+              <Input value={form.nameArabic} onChange={e => setForm(f => ({ ...f, nameArabic: e.target.value }))} dir='rtl' placeholder='e.g. فساتين' />
             </div>
 
             <div className="space-y-1.5">

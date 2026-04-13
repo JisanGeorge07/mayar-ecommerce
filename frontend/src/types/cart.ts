@@ -4,6 +4,7 @@ export interface CartItem {
   id: string; // Frontend composite ID (productId_colorId_sizeId)
   backendId?: string; // Backend Guid for API calls
   productId: string;
+  productSlug: string;
   variantId?: string;
   name: TranslatedText;
   image: string;

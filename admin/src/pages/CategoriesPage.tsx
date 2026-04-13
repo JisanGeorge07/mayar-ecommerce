@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Ban } from 'lucide-react';
+import { Plus, Pencil, Ban, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateSlug } from '@/utils/slug';
 import type { TopCategory } from '@/types';
@@ -113,6 +113,17 @@ export default function CategoriesPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this category?")) return;
+    try {
+      await topCategoryService.delete(id);
+      toast.success('Category deleted');
+      load();
+    } catch {
+      toast.error('Failed to delete category');
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -159,6 +170,9 @@ export default function CategoriesPage() {
                           <Ban className="h-3.5 w-3.5" />
                         </Button>
                       )}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(cat.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </td>
                 </tr>

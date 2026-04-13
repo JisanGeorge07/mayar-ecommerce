@@ -71,6 +71,7 @@ const mapBackendToCartItem = (item: BackendCartItem): CartItem => ({
   id: `${item.productId}_${item.productColorId || 'default'}_${item.productSizeId || 'default'}`,
   backendId: item.id,
   productId: item.productId,
+  productSlug: item.productSlug || '',
   variantId: item.productVariantId,
   name: {
     en: item.productNameEnglish || '',

@@ -8,7 +8,7 @@ const AccountSecurity = () => {
   const t = (en: string, ar: string) => lang === 'ar' ? ar : en;
 
   const items = [
-    { icon: Phone, label: t('Registered Phone', 'الهاتف المسجل'), value: user?.phone || '—' },
+    { icon: Phone, label: t('Registered Phone', 'الهاتف المسجل'), value: user?.phoneNumber || '—' },
     { icon: Mail, label: t('Registered Email', 'البريد المسجل'), value: user?.email || '—' },
     { icon: Clock, label: t('Last Login', 'آخر دخول'), value: new Date().toLocaleDateString(lang === 'ar' ? 'ar-KW' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) },
     { icon: Shield, label: t('Account Status', 'حالة الحساب'), value: t('Active', 'نشط') },

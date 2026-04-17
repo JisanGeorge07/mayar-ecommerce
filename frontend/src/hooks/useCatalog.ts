@@ -24,6 +24,7 @@ import { productApi } from '@/services/api/productService';
 export interface GeneratedMegaSection {
   id: string;
   title: TranslatedText;
+  href: string;
   links: { id: string; label: TranslatedText; href: string }[];
 }
 
@@ -157,13 +158,8 @@ async function fetchAndTransformCatalog(): Promise<TransformResult> {
     const sections: GeneratedMegaSection[] = cat.subcategories.map(sub => ({
       id: `${cat.id}-${sub.slug}`,
       title: sub.name,
+      href: routes.subcategory(cat.slug, sub.slug),
       links: [
-        // "All" link for the subcategory itself
-        {
-          id: `${cat.id}-${sub.slug}-all`,
-          label: { en: `All ${sub.name.en}`, ar: `كل ${sub.name.ar}` },
-          href: routes.subcategory(cat.slug, sub.slug),
-        },
         // Product type links
         ...sub.productTypes.map(pt => ({
           id: `${cat.id}-${sub.slug}-${pt.slug}`,

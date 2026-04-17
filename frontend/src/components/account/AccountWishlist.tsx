@@ -23,9 +23,9 @@ const AccountWishlistSection = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-foreground">
-        {label('Wishlist', 'المفضلة')} <span className="text-muted-foreground font-normal text-base">({items.length})</span>
-      </h2>
+      <h2 className="font-heading text-xl font-bold text-foreground">
+        {label('Wishlist', 'المفضلة')} <span className="text-muted-foreground font-normal text-base font-sans">({items.length})</span>
+      </h2> 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {items.map(item => (
           <div key={item.id} className="group relative bg-card rounded-lg overflow-hidden border border-border/50 hover:shadow-md transition-shadow flex flex-col">

@@ -25,22 +25,28 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
   // Find default variant for pricing and wishlist
   const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
 
+  const [selectedColorId, setSelectedColorId] = useState(defaultVariant?.productColorId || '');
+  const [hoveredColorId, setHoveredColorId] = useState<string | null>(null);
+
   const liked = isInWishlist(product.id);
   const getText = (en?: string, ar?: string) => {
     return lang === 'ar' ? (ar || en || '') : (en || ar || '');
   };
 
-  // Use default variant image if available, otherwise fall back to product images
-  const variantImageUrl = defaultVariant?.imageUrl;
+  // Use hovered or selected color to determine the variant image
+  const activeColorId = hoveredColorId || selectedColorId;
+  const activeVariant = product.variants?.find(v => v.productColorId === activeColorId) || defaultVariant;
+
+  const variantImageUrl = activeVariant?.imageUrl;
   const productImg = product.images?.find(i => i.imageUrl) || product.images?.[0];
   const displayImageUrl = variantImageUrl || productImg?.imageUrl || '/placeholder.png';
   const displayImageAlt = productImg?.imageAlt || getText(product.nameEnglish, product.nameArabic);
 
   // Use variant price if available, otherwise fall back to product base price
-  const basePriceKWD = defaultVariant?.basePriceKWD ?? product.basePriceKWD;
-  const basePriceINR = defaultVariant?.basePriceINR ?? product.basePriceINR;
-  const compareAtPriceKWD = defaultVariant?.compareAtPriceKWD ?? product.compareAtPriceKWD;
-  const compareAtPriceINR = defaultVariant?.compareAtPriceINR ?? product.compareAtPriceINR;
+  const basePriceKWD = activeVariant?.basePriceKWD ?? product.basePriceKWD;
+  const basePriceINR = activeVariant?.basePriceINR ?? product.basePriceINR;
+  const compareAtPriceKWD = activeVariant?.compareAtPriceKWD ?? product.compareAtPriceKWD;
+  const compareAtPriceINR = activeVariant?.compareAtPriceINR ?? product.compareAtPriceINR;
 
   const basePrice = getPrice(basePriceKWD, basePriceINR);
   const comparePrice = getPrice(compareAtPriceKWD, compareAtPriceINR);
@@ -51,22 +57,22 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
   // Check if product has selectable variants (more than one color or size)
   const hasVariants = (product.colors && product.colors.length > 1) || (product.sizes && product.sizes.length > 1);
 
-  // Sort colors to prioritize default variant
+  // Sort colors to prioritize initial selected color
   const displayColors = useMemo(() => {
     const colors = product.colors || [];
     if (colors.length <= 1) return colors;
 
-    const defaultColorId = defaultVariant?.productColorId;
-    if (!defaultColorId) return colors;
+    const initialColorId = defaultVariant?.productColorId;
+    if (!initialColorId) return colors;
 
     return [...colors].sort((a, b) => {
-      if (a.id === defaultColorId) return -1;
-      if (b.id === defaultColorId) return 1;
+      if (a.id === initialColorId) return -1;
+      if (b.id === initialColorId) return 1;
       return 0;
     });
   }, [product.colors, defaultVariant]);
 
-  // Convert to ProductItem for QuickAddPopup (only when popup is open to avoid unnecessary computation)
+  // Convert to ProductItem for QuickAddPopup (only when popup is open)
   const productItem = useMemo(() => {
     if (!quickAddOpen && !wishlistPopupOpen) return null;
     return mapProductDtoToProductItem(product);
@@ -130,7 +136,7 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
         </Link>
 
         {/* Info */}
-        <div className={`p-3 ${compact ? 'p-2' : 'p-3'}`}>
+        <div className={`p-3 flex-1 flex flex-col ${compact ? 'p-2' : 'p-3'}`}>
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-0.5 truncate">
             {getText(product.brandEnglish, product.brandArabic)}
           </p>
@@ -142,7 +148,7 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
 
           {/* Rating */}
           {product.rating !== undefined && (
-            <div className="flex items-center gap-1 mb-1.5 mt-6">
+            <div className="flex items-center gap-1 mb-1.5 mt-auto pt-2">
               <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map(star => (
                   <Star
@@ -170,9 +176,16 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
               {displayColors.length > 0 && (
                 <>
                   {displayColors.slice(0, 5).map(color => (
-                    <span
+                    <button
                       key={color.id}
-                      className="w-3.5 h-3.5 rounded-full border border-border flex-shrink-0"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedColorId(color.id);
+                      }}
+                      onMouseEnter={() => setHoveredColorId(color.id)}
+                      onMouseLeave={() => setHoveredColorId(null)}
+                      className={`w-3.5 h-3.5 rounded-full border transition-all`}
                       style={{ backgroundColor: color.hex || '#ccc' }}
                       title={getText(color.nameEnglish, color.nameArabic)}
                     />
@@ -188,10 +201,10 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
                 <TooltipTrigger asChild>
                   <button
                     onClick={handleAddToCart}
-                    className="p-1 rounded bg-header text-header-foreground hover:bg-header/90 transition-colors flex-shrink-0 ms-auto"
+                    className="p-1.5 rounded bg-header text-header-foreground hover:bg-header/90 transition-colors flex-shrink-0 ms-auto"
                     aria-label="Add to cart"
                   >
-                    <ShoppingBag size={13} />
+                    <ShoppingBag size={14} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
@@ -222,6 +235,7 @@ const ApiProductCard = ({ product, compact }: ApiProductCardProps) => {
           mode="wishlist"
         />
       )}
+
     </>
   );
 };

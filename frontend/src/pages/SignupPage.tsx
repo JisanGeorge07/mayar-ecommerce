@@ -29,9 +29,9 @@ const SignupPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    phoneNumber: '',
+    phoneNumber: '+965 ',
     address: '',
-    country: '',
+    country: 'Kuwait',
     pinCode: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -93,13 +93,13 @@ const SignupPage = () => {
     }
   };
 
-  const fields: { key: keyof typeof form; label: string; labelAr: string; type: string; placeholder: string; dir?: string; maxLength?: number; required?: boolean }[] = [
+  const fields: { key: keyof typeof form; label: string; labelAr: string; type: string; placeholder: string; dir?: string; maxLength?: number; required?: boolean; readOnly?: boolean }[] = [
     { key: 'name', label: 'Full Name', labelAr: 'الاسم الكامل', type: 'text', placeholder: 'John Doe', maxLength: 100, required: true },
     { key: 'email', label: 'Email', labelAr: 'البريد الإلكتروني', type: 'email', placeholder: 'john@example.com', dir: 'ltr', maxLength: 255, required: true },
-    { key: 'phoneNumber', label: 'Phone Number (Optional)', labelAr: 'رقم الهاتف (اختياري)', type: 'tel', placeholder: '+965 XXXX XXXX', dir: 'ltr', maxLength: 20, required: false },
+    { key: 'phoneNumber', label: 'Phone Number', labelAr: 'رقم الهاتف', type: 'tel', placeholder: '+965 XXXX XXXX', dir: 'ltr', maxLength: 20, required: false },
     { key: 'address', label: 'Full Address', labelAr: 'العنوان الكامل', type: 'text', placeholder: 'Block 5, Street 10, Kuwait City', maxLength: 300, required: true },
-    { key: 'country', label: 'Country', labelAr: 'الدولة', type: 'text', placeholder: 'Kuwait', maxLength: 100, required: true },
-    { key: 'pinCode', label: 'Pin Code', labelAr: 'الرمز البريدي', type: 'text', placeholder: '12345', dir: 'ltr', maxLength: 10, required: true },
+    { key: 'country', label: 'Country', labelAr: 'الدولة', type: 'text', placeholder: 'Kuwait', maxLength: 100, required: true, readOnly: true },
+    { key: 'pinCode', label: 'Postal Code', labelAr: 'رمز بريدي', type: 'text', placeholder: '12345', dir: 'ltr', maxLength: 10, required: true },
     { key: 'password', label: 'Password', labelAr: 'كلمة المرور', type: 'password', placeholder: '••••••••', dir: 'ltr', maxLength: 100, required: true },
     { key: 'confirmPassword', label: 'Confirm Password', labelAr: 'تأكيد كلمة المرور', type: 'password', placeholder: '••••••••', dir: 'ltr', maxLength: 100, required: true }
   ];
@@ -172,10 +172,10 @@ const SignupPage = () => {
                         type={showToggle ? (isVisible ? 'text' : 'password') : f.type}
                         value={form[f.key]}
                         onChange={(e) => update(f.key, e.target.value)}
-                        placeholder={f.placeholder}
                         dir={f.dir}
                         maxLength={f.maxLength}
-                        className={`w-full h-10 px-3 bg-secondary border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring ${showToggle ? 'pe-10' : ''}`}
+                        readOnly={f.readOnly}
+                        className={`w-full h-10 px-3 bg-secondary border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring ${showToggle ? 'pe-10' : ''} ${f.readOnly ? 'opacity-70 cursor-not-allowed bg-muted' : ''}`}
                       />
                       {showToggle && (
                         <button

@@ -32,14 +32,6 @@ const iconMap: Record<string, LucideIcon> = {
   RefreshCw,
 };
 
-// Default services if no features from API
-const defaultServices = [
-  { iconName: 'Truck', labelEn: 'Free Delivery', labelAr: 'توصيل مجاني' },
-  { iconName: 'RotateCcw', labelEn: 'Easy Returns', labelAr: 'إرجاع سهل' },
-  { iconName: 'Shield', labelEn: 'Secure Payment', labelAr: 'دفع آمن' },
-  { iconName: 'CheckCircle', labelEn: 'Authentic', labelAr: 'منتجات أصلية' },
-];
-
 interface ProductInfoProps {
   product: ProductItem;
   selectedColor?: string;
@@ -215,16 +207,13 @@ const ProductInfo = ({ product, selectedColor: controlledColor, onColorChange, s
     navigate('/cart');
   };
 
-  // Use features from product if available, otherwise use defaults
-  const displayFeatures = product.features && product.features.length > 0
-    ? product.features.map(f => ({
+  // Use features from product if available
+  const displayFeatures = useMemo(() => {
+    return (product.features || []).map(f => ({
       iconName: f.iconName || 'CheckCircle',
       label: lang === 'ar' ? f.label.ar : f.label.en,
-    }))
-    : defaultServices.map(s => ({
-      iconName: s.iconName,
-      label: lang === 'ar' ? s.labelAr : s.labelEn,
     }));
+  }, [product.features, lang]);
 
   return (
     <div className="space-y-5">
@@ -395,18 +384,20 @@ const ProductInfo = ({ product, selectedColor: controlledColor, onColorChange, s
         </button>
       </div>
 
-      {/* Service highlights */}
-      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
-        {displayFeatures.map(({ iconName, label }, index) => {
-          const Icon = iconMap[iconName] || CheckCircle;
-          return (
-            <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Icon size={16} className="text-brand flex-shrink-0" />
-              {label}
-            </div>
-          );
-        })}
-      </div>
+      {/* Service highlights (only show if features exist) */}
+      {displayFeatures.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
+          {displayFeatures.map(({ iconName, label }, index) => {
+            const Icon = iconMap[iconName] || CheckCircle;
+            return (
+              <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Icon size={16} className="text-brand flex-shrink-0" />
+                {label}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modals */}
       <SizeGuideModal

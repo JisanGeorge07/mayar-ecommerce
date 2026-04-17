@@ -16,7 +16,7 @@ const CartDrawer = () => {
             <SheetTitle className="font-heading text-lg flex items-center gap-2">
               <ShoppingBag size={20} />
               {lang === 'ar' ? 'سلة التسوق' : 'Shopping Cart'}
-              <span className="text-sm font-normal text-muted-foreground">({count})</span>
+              <span className="text-sm font-normal text-muted-foreground font-sans">({count})</span>
             </SheetTitle>
           </div>
         </SheetHeader>

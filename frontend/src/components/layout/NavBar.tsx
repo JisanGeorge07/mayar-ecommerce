@@ -102,7 +102,9 @@ const CatalogMegaPanel = ({ item, onMouseEnter, onMouseLeave }: {
           {item.sections.map(section => (
             <div key={section.id} className="min-w-0">
               <h4 className="text-sm font-semibold text-foreground mb-3 pb-2 border-b border-border">
-                {t(section.title)}
+                <Link to={section.href} className="hover:text-brand transition-colors">
+                  {t(section.title)}
+                </Link>
               </h4>
               <ul className="space-y-1.5">
                 {section.links.map(link => (

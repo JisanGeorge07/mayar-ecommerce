@@ -11,6 +11,7 @@ export interface MegaMenuLink {
 export interface MegaMenuSection {
   id: string;
   title: TranslatedText;
+  href?: string;
   links: MegaMenuLink[];
 }
 

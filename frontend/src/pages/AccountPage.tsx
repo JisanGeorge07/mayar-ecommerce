@@ -159,7 +159,7 @@ const AccountPage = () => {
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <button className="bg-brand text-brand-foreground p-3 rounded-full shadow-lg">
-                  <Menu size={22} />
+                  <User size={22} />
                 </button>
               </SheetTrigger>
               <SheetContent side={lang === 'ar' ? 'right' : 'left'} className="w-[280px] p-4">

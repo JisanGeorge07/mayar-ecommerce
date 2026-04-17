@@ -49,7 +49,7 @@ const FilterSidebar = ({ filters, onChange, categories, brands, colors, priceRan
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-heading text-lg font-bold text-foreground">
           {t('Filters', 'التصفية')}
-          {activeCount > 0 && <span className="text-xs text-brand ms-1">({activeCount})</span>}
+          {activeCount > 0 && <span className="text-xs text-brand ms-1 font-sans">({activeCount})</span>} 
         </h3>
         <div className="flex items-center gap-2">
           {activeCount > 0 && (

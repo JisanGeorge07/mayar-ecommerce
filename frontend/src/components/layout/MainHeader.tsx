@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, User, Heart, ShoppingBag, Menu, ChevronDown, ChevronRight, LogIn, UserPlus } from 'lucide-react';
+import { Search, User, Heart, ShoppingBag, Menu, ChevronDown, ChevronRight, LogIn, UserPlus, ArrowLeft, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLocale } from '@/hooks/useLocale';
 import { useSettings } from '@/context/SettingsContext';
@@ -21,6 +21,7 @@ const MainHeader = () => {
   const { count: cartCount, setDrawerOpen } = useCart();
   const { count: wishlistCount } = useWishlist();
   const [catOpen, setCatOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const [hoveredSub, setHoveredSub] = useState<string | null>(null);
   const catRef = useRef<HTMLDivElement>(null);
@@ -41,7 +42,7 @@ const MainHeader = () => {
   const allCategoriesLabel = lang === 'ar' ? 'جميع الفئات' : 'All Categories';
 
   // Close on route change
-  useEffect(() => { setCatOpen(false); setSearchTerm(''); setSearchFocused(false); }, [location.pathname, setSearchTerm]);
+  useEffect(() => { setCatOpen(false); setSearchTerm(''); setSearchFocused(false); setMobileSearchOpen(false); }, [location.pathname, setSearchTerm]);
 
   // Close on outside click
   useEffect(() => {
@@ -107,6 +108,80 @@ const MainHeader = () => {
 
   return (
     <header className="bg-background border-b border-border sticky top-0 z-[80]">
+      {/* Mobile search bar overlay */}
+      <AnimatePresence>
+        {mobileSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 z-[100] bg-background flex items-center gap-2 px-4 shadow-sm"
+          >
+            <button
+              onClick={() => setMobileSearchOpen(false)}
+              className="p-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft size={22} />
+            </button>
+            <div className="flex-1 relative">
+              <form onSubmit={handleSearchSubmit} className="relative w-full">
+                <Search size={18} className="absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  autoFocus
+                  type="text"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  placeholder={searchPlaceholder}
+                  className="w-full h-10 ps-10 pe-4 bg-secondary border-0 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                />
+              </form>
+
+              {/* Suggestions for mobile */}
+              <AnimatePresence>
+                {showSearchDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute top-full start-0 end-0 mt-2 bg-popover border border-border rounded-xl shadow-xl z-[90] max-h-[80vh] overflow-y-auto py-1 w-[calc(100vw-32px)] -ms-10"
+                  >
+                    {searchResults.map((result, i) => (
+                      <button
+                        key={`${result.type}-${result.id}-${i}`}
+                        onClick={() => handleSearchResultClick(result)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-start hover:bg-accent transition-colors"
+                      >
+                        {result.image && (
+                          <img src={result.image} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-popover-foreground truncate">{t(result.label)}</div>
+                          {result.sublabel && (
+                            <div className="text-xs text-muted-foreground truncate">{t(result.sublabel)}</div>
+                          )}
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground flex-shrink-0">
+                          {resultTypeLabel(result.type)}
+                        </span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <button
+              onClick={() => { setSearchTerm(''); }}
+              className={`p-2 text-muted-foreground hover:text-foreground transition-opacity ${searchTerm ? 'opacity-100' : 'opacity-0'}`}
+            >
+              <X size={20} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="container mx-auto max-w-7xl flex items-center justify-center h-16 md:h-20 gap-4 px-4">
         {/* Mobile hamburger */}
         <div className="lg:hidden flex-shrink-0">
@@ -276,8 +351,12 @@ const MainHeader = () => {
         {/* Right icons */}
         <div className="flex items-center gap-1 md:gap-2 lg:gap-3 flex-shrink-0 ms-auto lg:ms-0">
           {/* Mobile search */}
-          <button className="md:hidden p-2 text-foreground" aria-label="Search">
-            <Search size={20} />
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            className="md:hidden p-2 text-foreground"
+            aria-label="Search"
+          >
+            <Search size={22} />
           </button>
 
           {settings?.enableMyAccount && (

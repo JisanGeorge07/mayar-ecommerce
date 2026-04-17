@@ -67,7 +67,7 @@ const Footer = () => {
       <div className="border-t border-header-muted/20" data-footer-bottom>
         <div className="container py-4 flex items-center justify-center text-xs text-header-muted">
           <p className="text-center">
-            © 2026{' '}
+            © {new Date().getFullYear()}{' '}
             <a
               href="https://mayarinternational.com/"
               target="_blank"

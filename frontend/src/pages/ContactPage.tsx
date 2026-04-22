@@ -59,8 +59,34 @@ const ContactPage = () => {
     return (
       <div className="min-h-screen bg-background">
         <TopBar /><MainHeader /><NavBar />
-        <main className="flex items-center justify-center py-32">
-          <Loader2 className="w-8 h-8 animate-spin text-brand" />
+        <main>
+          {/* Hero Skeleton */}
+          <section className="py-14 md:py-20 bg-[#1B2A4A]/10 animate-pulse">
+            <div className="container text-center max-w-3xl flex flex-col items-center">
+              <div className="h-10 md:h-12 w-80 bg-muted rounded-lg mb-4" />
+              <div className="h-6 w-96 bg-muted rounded-lg opacity-60" />
+            </div>
+          </section>
+
+          {/* Info Cards Skeleton */}
+          <section className="py-12">
+            <div className="container max-w-5xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="bg-card border border-border rounded-xl p-5 text-center flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-muted animate-pulse mb-3" />
+                  <div className="h-3 w-16 bg-muted rounded animate-pulse mb-2" />
+                  <div className="h-2 w-24 bg-muted/60 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Map Skeleton */}
+          <section className="pb-16">
+            <div className="container max-w-5xl">
+              <div className="h-[400px] bg-muted rounded-xl animate-pulse" />
+            </div>
+          </section>
         </main>
         <Footer />
       </div>

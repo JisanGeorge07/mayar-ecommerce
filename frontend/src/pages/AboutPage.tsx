@@ -24,9 +24,19 @@ const AboutPage = () => {
   const c = aboutPageContent;
 
   const [aboutData, setAboutData] = useState<AboutData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    aboutService.getAbout().then(data => setAboutData(data));
+    setLoading(true); // Reset loading state when component mounts
+    aboutService.getAbout()
+      .then(data => {
+        setAboutData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching about data:", err);
+        setLoading(false);
+      });
   }, []);
 
   // Helper to get translated text from API response or fall back to mock
@@ -110,6 +120,71 @@ const AboutPage = () => {
   };
 
   const contactItems = getContactItems();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar /><MainHeader /><NavBar />
+        <main>
+          {/* Hero Skeleton */}
+          <section className="py-16 md:py-24 bg-[#1B2A4A]/10 animate-pulse">
+            <div className="container text-center max-w-3xl flex flex-col items-center">
+              <div className="h-10 md:h-12 w-64 bg-muted rounded-lg mb-4" />
+              <div className="h-6 w-96 bg-muted rounded-lg opacity-60" />
+            </div>
+          </section>
+
+          {/* Who We Are Skeleton */}
+          <section className="py-14 md:py-20">
+            <div className="container max-w-4xl space-y-6">
+              <div className="h-8 w-48 bg-muted rounded animate-pulse mb-8" />
+              <div className="space-y-4">
+                <div className="h-4 w-full bg-muted/60 rounded animate-pulse" />
+                <div className="h-4 w-full bg-muted/60 rounded animate-pulse" />
+                <div className="h-4 w-5/6 bg-muted/60 rounded animate-pulse" />
+              </div>
+              <div className="space-y-4 pt-4">
+                <div className="h-4 w-full bg-muted/60 rounded animate-pulse" />
+                <div className="h-4 w-3/4 bg-muted/60 rounded animate-pulse" />
+              </div>
+            </div>
+          </section>
+
+          {/* Vision & Mission Skeleton */}
+          <section className="bg-secondary/30 py-14 md:py-20">
+            <div className="container max-w-5xl grid md:grid-cols-2 gap-8">
+              {[1, 2].map((i) => (
+                <div key={i} className="bg-card border border-border rounded-xl p-8 space-y-6">
+                  <div className="w-12 h-12 rounded-full bg-muted animate-pulse" />
+                  <div className="h-6 w-32 bg-muted rounded animate-pulse" />
+                  <div className="space-y-3">
+                    <div className="h-4 w-full bg-muted/60 rounded animate-pulse" />
+                    <div className="h-4 w-full bg-muted/60 rounded animate-pulse" />
+                    <div className="h-4 w-2/3 bg-muted/60 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Contact Strip Skeleton */}
+          <section className="bg-[#1B2A4A]/5 py-10">
+            <div className="container max-w-4xl">
+              <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex flex-col items-center gap-3">
+                    <div className="w-6 h-6 bg-muted rounded-full animate-pulse" />
+                    <div className="h-3 w-24 bg-muted rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

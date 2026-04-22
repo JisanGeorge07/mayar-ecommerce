@@ -50,7 +50,6 @@ namespace Mayar.Api.Data.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("PinCode")

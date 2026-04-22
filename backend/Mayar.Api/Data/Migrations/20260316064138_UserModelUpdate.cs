@@ -28,7 +28,7 @@ namespace Mayar.Api.Data.Migrations
                 name: "PhoneNumber",
                 table: "Users",
                 type: "longtext",
-                nullable: false)
+                nullable: true)
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.AddColumn<string>(

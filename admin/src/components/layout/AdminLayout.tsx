@@ -5,6 +5,7 @@ import {
   Search as SearchIcon, Settings, Tag, Bell, User, ChevronLeft,
   ChevronRight, Grid3X3, LogOut, BellRing, Sparkles, CircleDot, LayoutGrid,
   Building2, Shield, MessageCircle, Truck, RefreshCcw, ScrollText, Ticket,
+  ShoppingCart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -22,6 +23,7 @@ const NAV_SECTIONS = [
       { title: 'Subcategories', path: '/subcategories', icon: Layers },
       { title: 'Product Types', path: '/product-types', icon: Grid3X3 },
       { title: 'Products', path: '/products', icon: Package },
+      { title: 'Orders', path: '/orders', icon: ShoppingCart },
     ],
   },
   {

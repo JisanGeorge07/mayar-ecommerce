@@ -29,6 +29,8 @@ import ShippingInformationPage from "./pages/ShippingInformationPage";
 import ReturnsExchangePage from "./pages/ReturnsExchangePage";
 import TermsConditionsPage from "./pages/TermsConditionsPage";
 import CouponsPage from "./pages/CouponsPage";
+import OrdersPage from "./pages/OrdersPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,8 @@ const App = () => (
             <Route path="/promo-banners" element={<ProtectedAdmin><PromoBannersPage /></ProtectedAdmin>} />
             <Route path="/settings" element={<ProtectedAdmin><SettingsPage /></ProtectedAdmin>} />
             <Route path="/coupons" element={<ProtectedAdmin><CouponsPage /></ProtectedAdmin>} />
+            <Route path="/orders" element={<ProtectedAdmin><OrdersPage /></ProtectedAdmin>} />
+            <Route path="/orders/:id" element={<ProtectedAdmin><OrderDetailPage /></ProtectedAdmin>} />
             <Route path="/pages/about-us" element={<ProtectedAdmin><AboutUsPage /></ProtectedAdmin>} />
             <Route path="/pages/privacy-policy" element={<ProtectedAdmin><PrivacyPolicyPage /></ProtectedAdmin>} />
             <Route path="/pages/contact-us" element={<ProtectedAdmin><ContactUsPage /></ProtectedAdmin>} />

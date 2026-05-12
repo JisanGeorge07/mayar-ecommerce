@@ -14,6 +14,7 @@ namespace Mayar.Api.Services
     public class AuthService(
         AppDbContext context,
         IConfiguration configuration,
+        IEmailService emailService,
         ILogger<AuthService> logger) : IAuthService
     {
         public async Task<UserResponseDto?> RegisterAsync(UserRegisterDto request)
@@ -152,6 +153,50 @@ namespace Mayar.Api.Services
                 Country = user.Country,
                 PinCode = user.PinCode,
             };
+        }
+
+        public async Task<bool> ForgotPasswordAsync(string email)
+        {
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                // Return true to avoid email enumeration
+                return true;
+            }
+
+            var token = Guid.NewGuid().ToString();
+            user.PasswordResetToken = token;
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+            await context.SaveChangesAsync();
+
+            var success = await emailService.SendPasswordResetEmailAsync(user.Email, token);
+            return success;
+        }
+
+        public async Task<bool> ResetPasswordAsync(ResetPasswordDto request)
+        {
+            var user = await context.Users.FirstOrDefaultAsync(u => 
+                u.PasswordResetToken == request.Token && 
+                u.PasswordResetTokenExpiry > DateTime.UtcNow);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+
+            // Also revoke refresh tokens for security
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+
+            await context.SaveChangesAsync();
+            logger.LogInformation("Password reset successful for user: {UserId}", user.Id);
+
+            return true;
         }
 
         private async Task<TokenResponseDto> CreateTokenResponse(User user)

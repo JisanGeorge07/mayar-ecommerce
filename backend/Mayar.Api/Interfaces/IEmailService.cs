@@ -11,4 +11,5 @@ public interface IEmailService
     Task<bool> SendOrderShippedEmailAsync(Order order, string trackingNumber);
 
     Task<bool> SendOrderDeliveredEmailAsync(Order order);
+    Task<bool> SendPasswordResetEmailAsync(string email, string token);
 }

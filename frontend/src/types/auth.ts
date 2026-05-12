@@ -46,3 +46,13 @@ export interface RefreshTokenRequest {
 export interface LogoutRequest {
   refreshToken: string;
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+  recaptchaToken?: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}

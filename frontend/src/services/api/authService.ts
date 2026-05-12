@@ -5,6 +5,8 @@ import type {
   UserProfile,
   TokenResponse,
   UpdateProfileRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from '@/types/auth';
 
 const TOKEN_KEY = 'token';
@@ -113,6 +115,36 @@ export const authService = {
       localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(USER_ID_KEY);
       return null;
+    }
+  },
+
+  async forgotPassword(data: ForgotPasswordRequest): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await api.post<{ message: string }>('/auth/forgot-password', {
+        email: data.email,
+        recaptchaToken: data.recaptchaToken,
+      });
+      return { success: true, message: res.data.message };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Failed to send reset link',
+      };
+    }
+  },
+
+  async resetPassword(data: ResetPasswordRequest): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await api.post<{ message: string }>('/auth/reset-password', {
+        token: data.token,
+        newPassword: data.newPassword,
+      });
+      return { success: true, message: res.data.message };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Failed to reset password',
+      };
     }
   },
 };

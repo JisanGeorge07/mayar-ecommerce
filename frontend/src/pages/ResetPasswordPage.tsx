@@ -42,7 +42,7 @@ const ResetPasswordPage = () => {
     }
 
     setLoading(true);
-    const res = await authService.resetPassword({ token, password });
+    const res = await authService.resetPassword({ token, newPassword: password });
     setLoading(false);
 
     if (res.success) {

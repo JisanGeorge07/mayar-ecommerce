@@ -12,15 +12,18 @@ public class EmailService : IEmailService
 {
     private readonly EmailSettingsDto _settings;
     private readonly ILogger<EmailService> _logger;
+    private readonly IConfiguration _configuration;
     private const string StoreName = "Mayar";
     private const string StoreEmail = "support@mayar.com";
     private const string StorePhone = "+965 1234 5678";
 
     public EmailService(
         IOptions<EmailSettingsDto> settings,
+        IConfiguration configuration,
         ILogger<EmailService> logger)
     {
         _settings = settings.Value;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -119,6 +122,25 @@ public class EmailService : IEmailService
             return false;
         }
     }
+
+    public async Task<bool> SendPasswordResetEmailAsync(string email, string token)
+    {
+        try
+        {
+            var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "http://localhost:5173";
+            var resetLink = $"{frontendUrl}/reset-password?token={token}";
+            var subject = "Reset Your Password - Mayar";
+            var body = BuildPasswordResetHtml(resetLink);
+
+            return await SendEmailAsync(email, subject, body);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send password reset email to {Email}", email);
+            return false;
+        }
+    }
+    
 
     private string BuildPaymentReceiptHtml(Order order)
     {
@@ -458,5 +480,77 @@ public class EmailService : IEmailService
         if (!string.IsNullOrWhiteSpace(order.ShippingFlatOffice)) parts.Add($"Flat/Office {order.ShippingFlatOffice}");
 
         return parts.Count > 0 ? string.Join("<br/>", parts) : "Address not provided";
+    }
+
+    private string BuildPasswordResetHtml(string resetLink)
+    {
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Reset Your Password</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;"">
+    <table role=""presentation"" width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""max-width: 600px; margin: 0 auto; padding: 20px;"">
+        <tr>
+            <td>
+                <!-- Header -->
+                <table width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-radius: 16px 16px 0 0;"">
+                    <tr>
+                        <td style=""padding: 32px; text-align: center;"">
+                            <h1 style=""margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;"">{StoreName}</h1>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Content -->
+                <table width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""background-color: #ffffff; border-radius: 0 0 16px 16px;"">
+                    <tr>
+                        <td style=""padding: 40px; text-align: center;"">
+                            <div style=""font-size: 48px; margin-bottom: 24px;"">🔐</div>
+                            <h2 style=""margin: 0 0 16px 0; color: #1f2937; font-size: 24px; font-weight: 700;"">Password Reset Request</h2>
+                            <p style=""margin: 0 0 24px 0; color: #4b5563; font-size: 16px; line-height: 1.6;"">
+                                We received a request to reset your password. If you didn't make this request, you can safely ignore this email.
+                            </p>
+                            
+                            <table cellspacing=""0"" cellpadding=""0"" border=""0"" align=""center"" style=""margin: 0 auto;"">
+                                <tr>
+                                    <td align=""center"" bgcolor=""#1f2937"" style=""border-radius: 8px;"">
+                                        <a href=""{resetLink}"" target=""_blank"" style=""display: inline-block; padding: 16px 32px; font-size: 16px; color: #ffffff; text-decoration: none; font-weight: 600;"">Reset My Password</a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style=""margin: 32px 0 0 0; color: #9ca3af; font-size: 14px;"">
+                                This link will expire in 1 hour.
+                            </p>
+                            
+                            <hr style=""margin: 32px 0; border: none; border-top: 1px solid #e5e7eb;"" />
+                            
+                            <p style=""margin: 0; color: #6b7280; font-size: 14px;"">
+                                If the button above doesn't work, copy and paste this link into your browser:
+                            </p>
+                            <p style=""margin: 8px 0 0 0; color: #3b82f6; font-size: 13px; word-break: break-all;"">
+                                {resetLink}
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Footer -->
+                <table width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""margin-top: 24px;"">
+                    <tr>
+                        <td style=""text-align: center;"">
+                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTime.UtcNow.Year} {StoreName}. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
     }
 }

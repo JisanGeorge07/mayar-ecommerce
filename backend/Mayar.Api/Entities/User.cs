@@ -24,8 +24,10 @@ namespace Mayar.Api.Entities
         public string? PinCode { get; set; }
 
         public string? RefreshToken { get; set; }
-
         public DateTime? RefreshTokenExpiryTime { get; set; }
+
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
 
         public string Role { get; set; } = "User";
     }

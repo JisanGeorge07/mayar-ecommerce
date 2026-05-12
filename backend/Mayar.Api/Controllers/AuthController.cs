@@ -120,5 +120,27 @@ namespace Mayar.Api.Controllers
                 data = user
             });
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+        {
+            var success = await authService.ForgotPasswordAsync(request.Email);
+            if (!success)
+            {
+                return BadRequest(new { message = "Failed to send reset link." });
+            }
+            return Ok(new { message = "If an account exists with this email, a reset link has been sent." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
+        {
+            var success = await authService.ResetPasswordAsync(request);
+            if (!success)
+            {
+                return BadRequest(new { message = "Invalid or expired token." });
+            }
+            return Ok(new { message = "Password reset successful." });
+        }
     }
 }

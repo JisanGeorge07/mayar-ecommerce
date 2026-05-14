@@ -4,7 +4,7 @@ import {
   Users, Shield, ShieldCheck, Pencil, Trash2, Plus,
   LayoutDashboard, FolderTree, Layers, Package, ShoppingCart,
   Sparkles, CircleDot, LayoutGrid, Ticket,
-  Building2, Shield as ShieldIcon, MessageCircle, Truck, RefreshCcw, ScrollText,
+  Building2, MessageCircle, Truck, RefreshCcw, ScrollText,
   BellRing, Settings, Grid3X3, UserPlus, ShieldPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,7 @@ const MENU_SECTIONS = [
     section: 'Pages',
     items: [
       { path: '/pages/about-us',             title: 'About Us',             icon: Building2     },
-      { path: '/pages/privacy-policy',       title: 'Privacy Policy',       icon: ShieldIcon    },
+      { path: '/pages/privacy-policy',       title: 'Privacy Policy',       icon: Shield        },
       { path: '/pages/contact-us',           title: 'Contact Us',           icon: MessageCircle },
       { path: '/pages/shipping-information', title: 'Shipping Information',  icon: Truck         },
       { path: '/pages/returns-exchange',     title: 'Returns & Exchange',   icon: RefreshCcw    },

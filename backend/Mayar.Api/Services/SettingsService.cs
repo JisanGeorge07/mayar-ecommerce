@@ -4,6 +4,7 @@ using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -33,8 +34,8 @@ public class SettingsService(AppDbContext context) : ISettingsService
                 Tagline = "Premium E-commerce",
                 DefaultMetaTitle = "Mayar Shop - Premium E-commerce",
                 DefaultMetaDescription = "Shop premium products at Mayar Shop. Fashion, beauty, accessories, and more.",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeHelper.GetLocalTime(),
+                UpdatedAt = DateTimeHelper.GetLocalTime()
             };
             context.FeatureSettings.Add(settings);
             await context.SaveChangesAsync();
@@ -51,7 +52,7 @@ public class SettingsService(AppDbContext context) : ISettingsService
             settings = new FeatureSettings
             {
                 Id = Guid.NewGuid(),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeHelper.GetLocalTime()
             };
             context.FeatureSettings.Add(settings);
         }
@@ -73,7 +74,7 @@ public class SettingsService(AppDbContext context) : ISettingsService
         if (dto.DefaultMetaTitle != null) settings.DefaultMetaTitle = dto.DefaultMetaTitle;
         if (dto.DefaultMetaDescription != null) settings.DefaultMetaDescription = dto.DefaultMetaDescription;
 
-        settings.UpdatedAt = DateTime.UtcNow;
+        settings.UpdatedAt = DateTimeHelper.GetLocalTime();
         await context.SaveChangesAsync();
 
         return settings.ToDto();
@@ -148,7 +149,7 @@ public class SettingsService(AppDbContext context) : ISettingsService
         if (dto.IsDefault.HasValue) country.IsDefault = dto.IsDefault.Value;
         if (dto.SortOrder.HasValue) country.SortOrder = dto.SortOrder.Value;
 
-        country.UpdatedAt = DateTime.UtcNow;
+        country.UpdatedAt = DateTimeHelper.GetLocalTime();
         await context.SaveChangesAsync();
 
         return country.ToDto();
@@ -226,7 +227,7 @@ public class SettingsService(AppDbContext context) : ISettingsService
         if (dto.IsRequired.HasValue) field.IsRequired = dto.IsRequired.Value;
         if (dto.SortOrder.HasValue) field.SortOrder = dto.SortOrder.Value;
 
-        field.UpdatedAt = DateTime.UtcNow;
+        field.UpdatedAt = DateTimeHelper.GetLocalTime();
         await context.SaveChangesAsync();
 
         return field.ToDto();
@@ -242,6 +243,28 @@ public class SettingsService(AppDbContext context) : ISettingsService
         return true;
     }
 
+    public async Task<Dictionary<string, string>> GetPageVisibilityAsync()
+    {
+        var visibility = new Dictionary<string, string>();
+
+        var about = await context.About.Select(a => a.Status).FirstOrDefaultAsync();
+        visibility["about"] = about ?? "draft";
+
+        var contact = await context.Contact.Select(c => c.Status).FirstOrDefaultAsync();
+        visibility["contact"] = contact ?? "draft";
+
+        var contentPages = await context.ContentPages
+            .Select(p => new { p.PageType, p.Status })
+            .ToListAsync();
+
+        foreach (var page in contentPages)
+        {
+            visibility[page.PageType] = page.Status;
+        }
+
+        return visibility;
+    }
+
     // Seed Methods
     private async Task SeedDefaultCountriesAsync()
     {
@@ -253,8 +276,8 @@ public class SettingsService(AppDbContext context) : ISettingsService
             IsEnabled = true,
             IsDefault = true,
             SortOrder = 1,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
 
         var india = new CheckoutCountry
@@ -265,8 +288,8 @@ public class SettingsService(AppDbContext context) : ISettingsService
             IsEnabled = true,
             IsDefault = false,
             SortOrder = 2,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
 
         context.CheckoutCountries.AddRange(kuwait, india);
@@ -317,8 +340,8 @@ public class SettingsService(AppDbContext context) : ISettingsService
 
         foreach (var field in fields)
         {
-            field.CreatedAt = DateTime.UtcNow;
-            field.UpdatedAt = DateTime.UtcNow;
+            field.CreatedAt = DateTimeHelper.GetLocalTime();
+            field.UpdatedAt = DateTimeHelper.GetLocalTime();
         }
 
         context.CheckoutAddressFields.AddRange(fields);

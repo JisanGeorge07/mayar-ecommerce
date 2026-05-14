@@ -34,5 +34,5 @@ export const INITIAL_SHOP_BY_CATEGORY: Omit<ShopByCategoryItem, 'id' | 'created_
   custom_url: '',
   sort_order: 1,
   is_active: true,
-  is_published: false,
+  is_published: true,
 };

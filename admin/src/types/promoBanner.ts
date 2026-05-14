@@ -34,8 +34,8 @@ export const INITIAL_PROMO_BANNER: Omit<PromoBannerItem, 'id' | 'created_at' | '
   label_ar: '',
   title_en: '',
   title_ar: '',
-  cta_text_en: 'Shop now',
-  cta_text_ar: 'تسوق الآن',
+  cta_text_en: '',
+  cta_text_ar: '',
   desktop_image_url: '',
   mobile_image_url: '',
   alt_text: '',
@@ -47,5 +47,5 @@ export const INITIAL_PROMO_BANNER: Omit<PromoBannerItem, 'id' | 'created_at' | '
   custom_url: '',
   sort_order: 0,
   is_active: true,
-  is_published: false,
+  is_published: true,
 };

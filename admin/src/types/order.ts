@@ -11,7 +11,7 @@ export type OrderStatus =
   | 'refund_requested'
   | 'refunded';
 
-export type PaymentMethod = 'credit_card' | 'apple_pay' | 'google_pay' | 'cash_on_delivery';
+export type PaymentMethod = 'credit_card' | 'myfatoorah' | 'apple_pay' | 'google_pay' | 'cash_on_delivery';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type UpdateSource = 'admin' | 'warehouse' | 'courier' | 'customer_support' | 'system';
 
@@ -90,6 +90,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   credit_card: 'Credit Card',
+  myfatoorah: 'MyFatoorah',
   apple_pay: 'Apple Pay',
   google_pay: 'Google Pay',
   cash_on_delivery: 'Cash on Delivery',

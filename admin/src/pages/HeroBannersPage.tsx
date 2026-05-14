@@ -22,6 +22,7 @@ export default function HeroBannersPage() {
   const [showForm, setShowForm] = useState(false);
   const [previewBanner, setPreviewBanner] = useState<HeroBanner | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -64,16 +65,23 @@ export default function HeroBannersPage() {
   };
 
   const handleSave = async (data: Omit<HeroBanner, 'id' | 'created_at' | 'updated_at'>, desktopFile?: File, mobileFile?: File) => {
-    if (editBanner) {
-      await heroBannerService.updateBanner(editBanner.id, data, desktopFile, mobileFile);
-      toast({ title: 'Banner updated' });
-    } else {
-      await heroBannerService.createBanner(data, desktopFile, mobileFile);
-      toast({ title: 'Banner created' });
+    setSaving(true);
+    try {
+      if (editBanner) {
+        await heroBannerService.updateBanner(editBanner.id, data, desktopFile, mobileFile);
+        toast({ title: 'Banner updated' });
+      } else {
+        await heroBannerService.createBanner(data, desktopFile, mobileFile);
+        toast({ title: 'Banner created' });
+      }
+      setShowForm(false);
+      setEditBanner(null);
+      load();
+    } catch (error) {
+      toast({ title: 'Failed to save banner', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
-    setShowForm(false);
-    setEditBanner(null);
-    load();
   };
 
   const openCreate = () => { setEditBanner(null); setShowForm(true); };
@@ -207,6 +215,7 @@ export default function HeroBannersPage() {
             initial={editBanner || undefined}
             onSave={handleSave}
             onCancel={() => { setShowForm(false); setEditBanner(null); }}
+            saving={saving}
           />
         </DialogContent>
       </Dialog>

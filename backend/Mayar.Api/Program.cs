@@ -1,4 +1,4 @@
-using CloudinaryDotNet;
+ using CloudinaryDotNet;
 using Mayar.Api.Data;
 using Mayar.Api.DTOs;
 using Mayar.Api.Interfaces;
@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using System.Text;
+using Mayar.Api.Helpers;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -115,6 +116,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ICouponCodeService, CouponCodeService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<ITrustBadgeService, TrustBadgeService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Email Service configuration
 builder.Services.Configure<EmailSettingsDto>(builder.Configuration.GetSection("EmailSettings"));
@@ -158,7 +160,7 @@ app.MapGet("/", () => Results.Ok(new
 {
     message = "Mayar API is running",
     status = "healthy",
-    timestamp = DateTime.UtcNow
+    timestamp = DateTimeHelper.GetLocalTime()
 }));
 
 app.Run();

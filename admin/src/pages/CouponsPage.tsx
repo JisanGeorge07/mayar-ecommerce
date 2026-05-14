@@ -298,11 +298,10 @@ export default function CouponsPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search coupon code or name..." className="pl-9" />
+              <Input value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
@@ -312,7 +311,7 @@ export default function CouponsPage() {
             </SelectContent>
           </Select>
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Type" /></SelectTrigger>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="percentage">Percentage</SelectItem>
@@ -321,7 +320,7 @@ export default function CouponsPage() {
             </SelectContent>
           </Select>
           <Select value={filterScope} onValueChange={setFilterScope}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Applies To" /></SelectTrigger>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Scopes</SelectItem>
               <SelectItem value="all">All Products</SelectItem>
@@ -439,7 +438,7 @@ export default function CouponsPage() {
                 <Label className="text-xs">Coupon Code *</Label>
                 <div className="flex gap-2 mt-1">
                   <Input value={form.code} onChange={e => updateForm({ code: e.target.value.toUpperCase() })}
-                    placeholder="e.g. SUMMER25" className="font-mono tracking-widest" />
+                    className="font-mono tracking-widest" />
                   <Button variant="outline" size="sm" type="button"
                     onClick={() => updateForm({ code: generateCode() })}>
                     <RefreshCw className="h-3.5 w-3.5" />
@@ -502,7 +501,7 @@ export default function CouponsPage() {
                 <div>
                   <Label className="text-xs">Maximum Discount Cap (KWD)</Label>
                   <Input type="number" value={form.maxDiscountCap ?? ''} onChange={e => updateForm({ maxDiscountCap: e.target.value ? Number(e.target.value) : undefined })}
-                    className="mt-1 w-40" placeholder="Optional" min={0} step={0.001} />
+                    className="mt-1 w-40" min={0} step={0.001} />
                   <p className="mt-1 text-[11px] text-muted-foreground">e.g. Cap 10% discount at max KWD 5.000</p>
                 </div>
               )}
@@ -579,7 +578,7 @@ export default function CouponsPage() {
                 </div>
               )}
               {form.scope === 'products' && (
-                <Input placeholder="Search products..." className="mt-2" />
+                <Input className="mt-2" />
               )}
             </div>
 
@@ -649,11 +648,11 @@ export default function CouponsPage() {
           <div className="sticky bottom-0 mt-6 -mx-6 border-t border-border bg-card px-6 py-4 flex items-center justify-between">
             <Button variant="outline" onClick={() => saveCoupon(true)} disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Save as Draft
+              {loading ? 'Saving...' : 'Save as Draft'}
             </Button>
             <Button onClick={() => saveCoupon(false)} disabled={loading} className="bg-primary hover:bg-primary/90 text-primary-foreground">
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {editingId ? 'Update Coupon' : 'Publish Coupon'}
+              {loading ? 'Saving...' : (editingId ? 'Update Coupon' : 'Publish Coupon')}
             </Button>
           </div>
         </SheetContent>

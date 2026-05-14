@@ -31,8 +31,8 @@ public static class ContentPageMapper
             EffectiveDate = entity.EffectiveDate,
             LastRevisedDate = entity.LastRevisedDate,
             Status = entity.Status,
-            CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt,
+            CreatedAt = DateTime.SpecifyKind(entity.CreatedAt, DateTimeKind.Utc),
+            UpdatedAt = DateTime.SpecifyKind(entity.UpdatedAt, DateTimeKind.Utc),
             IsActive = entity.IsActive,
             Sections = entity.Sections?.Select(s => s.ToContentSectionDto()).ToList() ?? new List<ContentSectionDto>()
         };

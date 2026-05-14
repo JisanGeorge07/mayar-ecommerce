@@ -35,6 +35,18 @@ public class SettingsController(ISettingsService settingsService) : ControllerBa
         });
     }
 
+    [HttpGet("page-visibility")]
+    public async Task<IActionResult> GetPageVisibility()
+    {
+        var visibility = await settingsService.GetPageVisibilityAsync();
+        return Ok(new ApiResponse<Dictionary<string, string>>
+        {
+            Success = true,
+            Message = "Page visibility retrieved successfully.",
+            Data = visibility
+        });
+    }
+
     // Checkout Countries Endpoints
     [HttpGet("countries")]
     public async Task<IActionResult> GetCountries()

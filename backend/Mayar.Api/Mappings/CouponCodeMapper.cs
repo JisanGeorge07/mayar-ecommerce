@@ -37,8 +37,8 @@ public static class CouponCodeMapper
             EndDate = entity.EndDate,
             ShowInCartSuggestions = entity.ShowInCartSuggestions,
             DisplayOrder = entity.DisplayOrder,
-            CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt
+            CreatedAt = DateTime.SpecifyKind(entity.CreatedAt, DateTimeKind.Utc),
+            UpdatedAt = DateTime.SpecifyKind(entity.UpdatedAt, DateTimeKind.Utc)
         };
     }
 

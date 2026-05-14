@@ -1,6 +1,7 @@
 using System;
 using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Mappings;
 
@@ -42,8 +43,8 @@ public static class HeroSlideMapper
             SortOrder = entity.SortOrder,
             IsActive = entity.IsActive,
             IsPublished = entity.IsPublished,
-            CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt
+            CreatedAt = DateTime.SpecifyKind(entity.CreatedAt, DateTimeKind.Utc),
+            UpdatedAt = DateTime.SpecifyKind(entity.UpdatedAt, DateTimeKind.Utc)
         };
     }
 
@@ -78,8 +79,8 @@ public static class HeroSlideMapper
             SortOrder = dto.SortOrder,
             IsActive = dto.IsActive,
             IsPublished = dto.IsPublished,
-            CreatedAt = dto.CreatedAt ?? DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = dto.CreatedAt ?? DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
     }
 }

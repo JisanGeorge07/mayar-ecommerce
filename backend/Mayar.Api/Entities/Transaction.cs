@@ -1,5 +1,6 @@
 using System;
 using Mayar.Api.Enums;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -13,5 +14,5 @@ public class Transaction
     public PaymentStatus PaymentStatus { get; set; }
     public decimal? Amount { get; set; }
     public string? GatewayResponse { get; set; }
-    public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
+    public DateTime TransactionDate { get; set; } = DateTimeHelper.GetLocalTime();
 }

@@ -4,7 +4,7 @@ using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
-
+using Mayar.Api.Helpers;
 namespace Mayar.Api.Services;
 
 public class ShopByCategoryService(AppDbContext context, ICloudinaryService cloudinaryService) : IShopByCategoryService
@@ -71,8 +71,8 @@ public class ShopByCategoryService(AppDbContext context, ICloudinaryService clou
             SortOrder = dto.SortOrder,
             IsActive = dto.IsActive,
             IsPublished = dto.IsPublished,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
 
         context.ShopByCategories.Add(item);
@@ -111,7 +111,7 @@ public class ShopByCategoryService(AppDbContext context, ICloudinaryService clou
         item.SortOrder = dto.SortOrder;
         item.IsActive = dto.IsActive;
         item.IsPublished = dto.IsPublished;
-        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         // Update image only if new URL is provided
         if (!string.IsNullOrEmpty(dto.ImageUrl))
@@ -142,7 +142,7 @@ public class ShopByCategoryService(AppDbContext context, ICloudinaryService clou
             if (item != null)
             {
                 item.SortOrder = i + 1;
-                item.UpdatedAt = DateTime.UtcNow;
+                item.UpdatedAt = DateTimeHelper.GetLocalTime();
             }
         }
 

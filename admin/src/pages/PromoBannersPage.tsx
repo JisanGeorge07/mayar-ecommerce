@@ -21,6 +21,7 @@ export default function PromoBannersPage() {
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState<PromoBannerItem | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -42,6 +43,7 @@ export default function PromoBannersPage() {
   });
 
   const handleSave = async (data: Omit<PromoBannerItem, 'id' | 'created_at' | 'updated_at'>, desktopFile?: File, mobileFile?: File) => {
+    setSaving(true);
     try {
       if (editItem) {
         await promoBannerService.updateItem(editItem.id, data, desktopFile, mobileFile);
@@ -55,6 +57,8 @@ export default function PromoBannersPage() {
       load();
     } catch (error) {
       toast({ title: 'Failed to save banner', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -196,7 +200,7 @@ export default function PromoBannersPage() {
           <DialogHeader>
             <DialogTitle>{editItem ? 'Edit Promotional Banner' : 'Add Promotional Banner'}</DialogTitle>
           </DialogHeader>
-          <PromoBannerForm initial={editItem} onSave={handleSave} onCancel={() => { setOpen(false); setEditItem(null); }} />
+          <PromoBannerForm initial={editItem} onSave={handleSave} onCancel={() => { setOpen(false); setEditItem(null); }} saving={saving} />
         </DialogContent>
       </Dialog>
     </AdminLayout>

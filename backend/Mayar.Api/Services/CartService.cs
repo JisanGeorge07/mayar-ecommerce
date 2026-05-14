@@ -3,6 +3,7 @@ using Mayar.Api.DTOs;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -159,7 +160,7 @@ public class CartService(AppDbContext context) : ICartService
             }
 
             existingItem.Quantity = newQuantity;
-            existingItem.UpdatedAt = DateTime.UtcNow;
+            existingItem.UpdatedAt = DateTimeHelper.GetLocalTime();
             await context.SaveChangesAsync();
             return existingItem.ToCartItemDetailDto();
         }
@@ -178,8 +179,8 @@ public class CartService(AppDbContext context) : ICartService
             ProductSizeId = request.ProductSizeId,
             Quantity = request.Quantity,
             UnitPrice = unitPrice,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime(),
             IsActive = true
         };
 
@@ -237,7 +238,7 @@ public class CartService(AppDbContext context) : ICartService
         }
 
         item.Quantity = quantity;
-        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedAt = DateTimeHelper.GetLocalTime();
         await context.SaveChangesAsync();
 
         return item.ToCartItemDetailDto();
@@ -251,7 +252,7 @@ public class CartService(AppDbContext context) : ICartService
 
         // Soft delete
         item.IsActive = false;
-        item.UpdatedAt = DateTime.UtcNow;
+        item.UpdatedAt = DateTimeHelper.GetLocalTime();
         await context.SaveChangesAsync();
         return true;
     }
@@ -273,7 +274,7 @@ public class CartService(AppDbContext context) : ICartService
         foreach (var item in items)
         {
             item.IsActive = false;
-            item.UpdatedAt = DateTime.UtcNow;
+            item.UpdatedAt = DateTimeHelper.GetLocalTime();
         }
 
         await context.SaveChangesAsync();
@@ -291,7 +292,7 @@ public class CartService(AppDbContext context) : ICartService
             if (dbItem != null)
             {
                 dbItem.UnitPrice = item.CurrentPrice;
-                dbItem.UpdatedAt = DateTime.UtcNow;
+                dbItem.UpdatedAt = DateTimeHelper.GetLocalTime();
             }
         }
 
@@ -348,7 +349,7 @@ public class CartService(AppDbContext context) : ICartService
                 }
 
                 existingUserItem.Quantity = newQuantity;
-                existingUserItem.UpdatedAt = DateTime.UtcNow;
+                existingUserItem.UpdatedAt = DateTimeHelper.GetLocalTime();
 
                 // Remove guest item
                 guestItem.IsActive = false;
@@ -358,7 +359,7 @@ public class CartService(AppDbContext context) : ICartService
                 // Transfer to user
                 guestItem.UserId = userId;
                 guestItem.SessionId = null;
-                guestItem.UpdatedAt = DateTime.UtcNow;
+                guestItem.UpdatedAt = DateTimeHelper.GetLocalTime();
             }
         }
 

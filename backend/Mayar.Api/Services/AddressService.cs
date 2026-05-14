@@ -4,6 +4,7 @@ using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services
 {
@@ -40,7 +41,7 @@ namespace Mayar.Api.Services
                 foreach (var addr in existingAddresses)
                 {
                     addr.IsDefault = false;
-                    addr.UpdatedAt = DateTime.UtcNow;
+                    addr.UpdatedAt = DateTimeHelper.GetLocalTime();
                 }
             }
 
@@ -69,7 +70,7 @@ namespace Mayar.Api.Services
                 foreach (var addr in otherDefaults)
                 {
                     addr.IsDefault = false;
-                    addr.UpdatedAt = DateTime.UtcNow;
+                    addr.UpdatedAt = DateTimeHelper.GetLocalTime();
                 }
             }
 
@@ -109,11 +110,11 @@ namespace Mayar.Api.Services
             foreach (var addr in otherDefaults)
             {
                 addr.IsDefault = false;
-                addr.UpdatedAt = DateTime.UtcNow;
+                addr.UpdatedAt = DateTimeHelper.GetLocalTime();
             }
 
             address.IsDefault = true;
-            address.UpdatedAt = DateTime.UtcNow;
+            address.UpdatedAt = DateTimeHelper.GetLocalTime();
             await context.SaveChangesAsync();
 
             return true;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.DTOs;
 
@@ -63,5 +64,5 @@ public class AboutDto
 
     // Settings
     public string Status { get; set; } = "draft";
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTimeHelper.GetLocalTime();
 }

@@ -4,6 +4,7 @@ using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -13,7 +14,6 @@ public class ContentPageService(AppDbContext context) : IContentPageService
     {
         var pages = await context.ContentPages
             .Include(p => p.Sections.OrderBy(s => s.DisplayOrder))
-            .Where(p => p.IsActive)
             .ToListAsync();
 
         return pages.Select(p => p.ToContentPageDto()).ToList();
@@ -32,7 +32,7 @@ public class ContentPageService(AppDbContext context) : IContentPageService
     {
         var page = await context.ContentPages
             .Include(p => p.Sections.OrderBy(s => s.DisplayOrder))
-            .FirstOrDefaultAsync(p => p.PageType == pageType && p.IsActive);
+            .FirstOrDefaultAsync(p => p.PageType == pageType);
 
         return page?.ToContentPageDto();
     }
@@ -70,8 +70,8 @@ public class ContentPageService(AppDbContext context) : IContentPageService
             EffectiveDate = dto.EffectiveDate,
             LastRevisedDate = dto.LastRevisedDate,
             Status = dto.Status ?? "published",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime(),
             IsActive = true
         };
 
@@ -90,7 +90,7 @@ public class ContentPageService(AppDbContext context) : IContentPageService
                 BodyAr = s.BodyAr,
                 DisplayOrder = s.DisplayOrder > 0 ? s.DisplayOrder : index + 1,
                 IsActive = s.IsActive,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeHelper.GetLocalTime()
             }).ToList();
 
             context.ContentSections.AddRange(sections);
@@ -132,7 +132,7 @@ public class ContentPageService(AppDbContext context) : IContentPageService
         entity.EffectiveDate = dto.EffectiveDate;
         entity.LastRevisedDate = dto.LastRevisedDate;
         entity.Status = dto.Status ?? "published";
-        entity.UpdatedAt = DateTime.UtcNow;
+        entity.UpdatedAt = DateTimeHelper.GetLocalTime();
         entity.IsActive = dto.IsActive;
 
         // Remove existing sections
@@ -151,7 +151,7 @@ public class ContentPageService(AppDbContext context) : IContentPageService
                 BodyAr = s.BodyAr,
                 DisplayOrder = s.DisplayOrder > 0 ? s.DisplayOrder : index + 1,
                 IsActive = s.IsActive,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeHelper.GetLocalTime()
             }).ToList();
 
             context.ContentSections.AddRange(sections);

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities
 {
@@ -41,8 +42,8 @@ namespace Mayar.Api.Entities
         public string? Phone { get; set; }
         public string? Email { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
 
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTimeHelper.GetLocalTime();
     }
 }

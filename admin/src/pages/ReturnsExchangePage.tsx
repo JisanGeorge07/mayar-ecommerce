@@ -75,12 +75,13 @@ export default function ReturnsExchangePage() {
 
   const toggleOpen = (id: string) => setOpenSections((p) => ({ ...p, [id]: !p[id] }));
 
-  const save = async (status: 'draft' | 'published') => {
+  const save = async (forceStatus?: 'draft' | 'published') => {
     if (!data) return;
-    const saved = await returnsExchangeService.saveData({ ...data, status });
+    const finalStatus = forceStatus || data.status;
+    const saved = await returnsExchangeService.saveData({ ...data, status: finalStatus });
     setData(saved);
     setDirty(false);
-    toast.success(status === 'published' ? 'Returns & Exchange page published' : 'Draft saved successfully');
+    toast.success(finalStatus === 'published' ? 'Returns & Exchange page published' : 'Draft saved successfully');
   };
 
   if (!data) return <AdminLayout></AdminLayout>;
@@ -228,7 +229,7 @@ export default function ReturnsExchangePage() {
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => save('draft')}>Save Draft</Button>
-          <Button onClick={() => save('published')}>Publish</Button>
+          <Button onClick={() => save()}>Publish</Button>
         </div>
       </div>
     </AdminLayout>

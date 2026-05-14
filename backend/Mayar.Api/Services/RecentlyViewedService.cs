@@ -3,6 +3,7 @@ using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services
 {
@@ -34,7 +35,7 @@ namespace Mayar.Api.Services
             if (existing != null)
             {
                 // Update the viewed timestamp
-                existing.ViewedAt = DateTime.UtcNow;
+                existing.ViewedAt = DateTimeHelper.GetLocalTime();
                 await context.SaveChangesAsync();
 
                 logger.LogInformation("Updated recently viewed: {ProductId} for user {UserId}", request.ProductId, request.UserId);
@@ -53,7 +54,7 @@ namespace Mayar.Api.Services
             {
                 ProductId = request.ProductId,
                 UserId = request.UserId,
-                ViewedAt = DateTime.UtcNow
+                ViewedAt = DateTimeHelper.GetLocalTime()
             };
 
             context.RecentlyViewedProducts.Add(item);

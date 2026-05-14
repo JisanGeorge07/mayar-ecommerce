@@ -1,103 +1,97 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-
-export type NotificationType =
-  | 'new_order' | 'payment_success' | 'payment_failed'
-  | 'new_customer' | 'low_stock' | 'out_of_stock'
-  | 'support_request' | 'delivery_update'
-  | 'admin_announcement' | 'system_alert';
-
-export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical';
-export type NotificationStatus = 'draft' | 'published' | 'scheduled';
-
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: NotificationType;
-  priority: NotificationPriority;
-  status: NotificationStatus;
-  read: boolean;
-  isConfirmed?: boolean;
-  confirmedBy?: string;
-  confirmedAt?: string;
-  createdAt: string;
-  createdBy?: string;
-  targetModule?: string;
-  referenceType?: string;
-  referenceId?: string;
-}
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { notificationService, type Notification } from '@/services/notificationService';
+import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  createNotification: (data: Omit<Notification, 'id' | 'createdAt' | 'read'>) => Notification;
-  updateNotification: (id: string, data: Partial<Notification>) => void;
-  deleteNotification: (id: string) => void;
+  loading: boolean;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  confirmNotification: (id: string) => Promise<void>;
+  refreshNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'n-1', title: 'New order placed', message: 'Order #1024 has been placed by Ahmed K.',
-    type: 'new_order', priority: 'high', status: 'published', read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-  },
-  {
-    id: 'n-2', title: 'Low stock alert', message: 'Classic Polo Shirt (White, L) has only 3 units left.',
-    type: 'low_stock', priority: 'medium', status: 'published', read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-  {
-    id: 'n-3', title: 'Payment received', message: 'Payment of 45 KWD received for order #1023.',
-    type: 'payment_success', priority: 'low', status: 'published', read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: 'n-4', title: 'New customer registered', message: 'Sara M. has created a new account.',
-    type: 'new_customer', priority: 'low', status: 'published', read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-  },
-];
-
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.read && n.status === 'published').length;
+  const refreshNotifications = useCallback(async () => {
+    if (!user || user.role !== 'Admin') return;
+    try {
+      setLoading(true);
+      const [data, count] = await Promise.all([
+        notificationService.getAdminNotifications(),
+        notificationService.getUnreadCount(true)
+      ]);
+      setNotifications(data);
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
-  const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  useEffect(() => {
+    refreshNotifications();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(refreshNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [refreshNotifications]);
+
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   }, []);
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await notificationService.markAllAsRead(true);
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
   }, []);
 
-  const createNotification = useCallback((data: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
-    const notif: Notification = {
-      ...data,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      read: false,
-    };
-    setNotifications(prev => [notif, ...prev]);
-    return notif;
+  const confirmNotification = useCallback(async (id: string) => {
+    try {
+      await notificationService.confirmNotification(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isConfirmed: true, isRead: true, confirmedAt: new Date().toISOString() } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Failed to confirm notification:', error);
+    }
   }, []);
 
-  const updateNotification = useCallback((id: string, data: Partial<Notification>) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, ...data } : n));
-  }, []);
-
-  const deleteNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  }, []);
+  const deleteNotification = useCallback(async (id: string) => {
+    try {
+      await notificationService.deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      const deleted = notifications.find(n => n.id === id);
+      if (deleted && !deleted.isRead) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+    }
+  }, [notifications]);
 
   return (
     <NotificationContext.Provider value={{
-      notifications, unreadCount, markAsRead, markAllAsRead,
-      createNotification, updateNotification, deleteNotification,
+      notifications, unreadCount, loading, markAsRead, markAllAsRead,
+      deleteNotification, confirmNotification, refreshNotifications
     }}>
       {children}
     </NotificationContext.Provider>

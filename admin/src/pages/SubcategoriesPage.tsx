@@ -29,6 +29,7 @@ export default function SubcategoriesPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
@@ -75,7 +76,7 @@ export default function SubcategoriesPage() {
     }
 
     const slug = form.slug || generateSlug(form.nameEnglish);
-
+    setSaving(true);
     try {
       if (editId) {
         await middleCategoryService.update(editId, {
@@ -103,6 +104,8 @@ export default function SubcategoriesPage() {
       load();
     } catch {
       toast.error('Something went wrong');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -252,8 +255,10 @@ export default function SubcategoriesPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Save'}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : (editId ? 'Update' : 'Save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

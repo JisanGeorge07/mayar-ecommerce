@@ -13,15 +13,18 @@ import type { TopCategory, MiddleCategory, BottomCategory } from '@/types';
 import { topCategoryService } from '@/services/topCategoryService';
 import { middleCategoryService } from '@/services/middleCategoryService';
 import { bottomCategoryService } from '@/services/bottomCategoryService';
+import { productService } from '@/services';
+import type { Product } from '@/types';
 import { Image as ImageIcon, Upload } from 'lucide-react';
 
 interface Props {
   initial: ShopByCategoryItem | null;
   onSave: (data: Omit<ShopByCategoryItem, 'id' | 'created_at' | 'updated_at'>, imageFile?: File) => void;
   onCancel: () => void;
+  saving?: boolean;
 }
 
-export default function ShopByCategoryForm({ initial, onSave, onCancel }: Props) {
+export default function ShopByCategoryForm({ initial, onSave, onCancel, saving }: Props) {
   const [form, setForm] = useState<Omit<ShopByCategoryItem, 'id' | 'created_at' | 'updated_at'>>(
     initial ? { ...initial } : { ...INITIAL_SHOP_BY_CATEGORY }
   );
@@ -32,20 +35,23 @@ export default function ShopByCategoryForm({ initial, onSave, onCancel }: Props)
   const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
   const [middleCategories, setMiddleCategories] = useState<MiddleCategory[]>([]);
   const [bottomCategories, setBottomCategories] = useState<BottomCategory[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch categories from API on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const [top, middle, bottom] = await Promise.all([
+        const [top, middle, bottom, allProducts] = await Promise.all([
           topCategoryService.getAll(),
           middleCategoryService.getAll(),
           bottomCategoryService.getAll(),
+          productService.getProducts(),
         ]);
         setTopCategories(top);
         setMiddleCategories(middle);
         setBottomCategories(bottom);
+        setProducts(allProducts);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
       } finally {
@@ -83,19 +89,19 @@ export default function ShopByCategoryForm({ initial, onSave, onCancel }: Props)
         <FormSection title="Basic Info">
           <div className="space-y-4">
             <FormField label="Internal Name" required>
-              <Input value={form.internal_name} onChange={e => set('internal_name', e.target.value)} placeholder="e.g. Dresses" />
+              <Input value={form.internal_name} onChange={e => set('internal_name', e.target.value)} />
             </FormField>
 
             <Tabs defaultValue="en" className="w-full">
               <TabsList className="mb-2"><TabsTrigger value="en">English</TabsTrigger><TabsTrigger value="ar">العربية</TabsTrigger></TabsList>
               <TabsContent value="en">
                 <FormField label="Display Title (EN)" required>
-                  <Input value={form.title_en} onChange={e => set('title_en', e.target.value)} placeholder="Dresses" />
+                  <Input value={form.title_en} onChange={e => set('title_en', e.target.value)} />
                 </FormField>
               </TabsContent>
               <TabsContent value="ar">
                 <FormField label="Display Title (AR)">
-                  <Input value={form.title_ar} onChange={e => set('title_ar', e.target.value)} placeholder="فساتين" dir="rtl" />
+                  <Input value={form.title_ar} onChange={e => set('title_ar', e.target.value)} dir="rtl" />
                 </FormField>
               </TabsContent>
             </Tabs>
@@ -136,7 +142,7 @@ export default function ShopByCategoryForm({ initial, onSave, onCancel }: Props)
               )}
             </div>
             <FormField label="Alt Text">
-              <Input value={form.alt_text} onChange={e => set('alt_text', e.target.value)} placeholder="Descriptive alt text" />
+              <Input value={form.alt_text} onChange={e => set('alt_text', e.target.value)} />
             </FormField>
           </div>
         </FormSection>
@@ -180,9 +186,41 @@ export default function ShopByCategoryForm({ initial, onSave, onCancel }: Props)
                 </Select>
               </FormField>
             )}
+            {form.link_type === 'product' && (
+              <div className="space-y-4">
+                <FormField label="Product">
+                  <Select value={form.product_id} onValueChange={v => set('product_id', v)} disabled={loading}>
+                    <SelectTrigger><SelectValue placeholder={loading ? 'Loading...' : 'Select product'} /></SelectTrigger>
+                    <SelectContent>
+                      {products.filter(p => p.status === 'active').map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+
+                {form.product_id && (
+                  <div className="flex items-center gap-4 p-3 rounded-lg border bg-muted/30">
+                    {products.find(p => p.id === form.product_id)?.image_url && (
+                      <img
+                        src={products.find(p => p.id === form.product_id)?.image_url}
+                        alt="Product"
+                        className="h-16 w-16 rounded object-cover border"
+                      />
+                    )}
+                    <div>
+                      <h5 className="text-sm font-semibold">{products.find(p => p.id === form.product_id)?.name}</h5>
+                      <p className="text-xs text-muted-foreground">
+                        Base Price: {products.find(p => p.id === form.product_id)?.base_price_kwd} KWD
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {form.link_type === 'custom_url' && (
               <FormField label="Custom URL">
-                <Input value={form.custom_url} onChange={e => set('custom_url', e.target.value)} placeholder="https://..." />
+                <Input value={form.custom_url} onChange={e => set('custom_url', e.target.value)} />
               </FormField>
             )}
           </div>
@@ -206,9 +244,9 @@ export default function ShopByCategoryForm({ initial, onSave, onCancel }: Props)
         </FormSection>
 
         <div className="flex gap-3 justify-end pt-2">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(form, imageFile)}>
-            {initial ? 'Update' : 'Create'}
+          <Button variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
+          <Button onClick={() => onSave(form, imageFile)} disabled={saving}>
+            {saving ? 'Saving...' : (initial ? 'Update' : 'Create')}
           </Button>
         </div>
       </div>

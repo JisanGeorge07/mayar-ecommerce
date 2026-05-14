@@ -241,10 +241,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     {recentNotifs.map(n => (
                       <button key={n.id} onClick={() => { markAsRead(n.id); navigate('/notifications'); setShowNotifs(false); }}
                         className={cn('flex w-full flex-col gap-0.5 px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border last:border-0',
-                          !n.read && 'bg-primary/5'
+                          !n.isRead && 'bg-primary/5'
                         )}>
-                        <span className="text-sm font-medium text-foreground">{n.title}</span>
-                        <span className="text-xs text-muted-foreground line-clamp-1">{n.message}</span>
+                        <span className="text-sm font-medium text-foreground">{n.titleEnglish}</span>
+                        <span className="text-xs text-muted-foreground line-clamp-1">{n.messageEnglish}</span>
                         <span className="text-[10px] text-muted-foreground">{timeAgo(n.createdAt)}</span>
                       </button>
                     ))}

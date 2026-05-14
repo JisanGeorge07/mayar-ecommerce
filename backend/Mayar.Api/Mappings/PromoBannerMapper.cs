@@ -1,6 +1,7 @@
 using System;
 using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Mappings;
 
@@ -61,8 +62,8 @@ public static class PromoBannerMapper
             SortOrder = dto.SortOrder,
             IsActive = dto.IsActive,
             IsPublished = dto.IsPublished,
-            CreatedAt = dto.CreatedAt ?? DateTime.UtcNow,
-            UpdatedAt = dto.UpdatedAt ?? DateTime.UtcNow
+            CreatedAt = dto.CreatedAt ?? DateTimeHelper.GetLocalTime(),
+            UpdatedAt = dto.UpdatedAt ?? DateTimeHelper.GetLocalTime()
         };
     }
 }

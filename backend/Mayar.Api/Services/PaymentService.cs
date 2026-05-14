@@ -8,6 +8,7 @@ using Mayar.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -146,8 +147,8 @@ public class PaymentService : IPaymentService
             InvoiceAmount = dto.Amount,
             CurrencyIso = dto.Currency,
             PaymentStatus = "PENDING",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
 
         // Build ExecutePayment request
@@ -214,7 +215,7 @@ public class PaymentService : IPaymentService
                     : (IsValidJson(responseContent)
                         ? responseContent
                         : JsonSerializer.Serialize(new { error = responseContent, statusCode = response.StatusCode, suggestion = errorMessage }));
-                payment.UpdatedAt = DateTime.UtcNow;
+                payment.UpdatedAt = DateTimeHelper.GetLocalTime();
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
 
@@ -228,7 +229,7 @@ public class PaymentService : IPaymentService
             {
                 payment.PaymentStatus = "FAILED";
                 payment.ErrorResponse = JsonSerializer.Serialize(new { error = "Invalid response from MyFatoorah" });
-                payment.UpdatedAt = DateTime.UtcNow;
+                payment.UpdatedAt = DateTimeHelper.GetLocalTime();
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
 
@@ -238,7 +239,7 @@ public class PaymentService : IPaymentService
             // Update payment record with gateway response
             payment.InvoiceId = result.Data.InvoiceId.ToString();
             payment.GatewayResponse = responseContent;
-            payment.UpdatedAt = DateTime.UtcNow;
+            payment.UpdatedAt = DateTimeHelper.GetLocalTime();
 
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
@@ -262,7 +263,7 @@ public class PaymentService : IPaymentService
             {
                 payment.PaymentStatus = "FAILED";
                 payment.ErrorResponse = JsonSerializer.Serialize(new { error = ex.Message, stackTrace = ex.StackTrace });
-                payment.UpdatedAt = DateTime.UtcNow;
+                payment.UpdatedAt = DateTimeHelper.GetLocalTime();
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
             }
@@ -390,7 +391,7 @@ public class PaymentService : IPaymentService
                 payment.PaymentId = paymentId;
                 payment.PaymentStatus = invoiceStatus.ToUpper();
                 payment.CallbackResponse = responseContent;
-                payment.UpdatedAt = DateTime.UtcNow;
+                payment.UpdatedAt = DateTimeHelper.GetLocalTime();
 
                 // Store transaction reference if available
                 if (!string.IsNullOrEmpty(data.CustomerReference))

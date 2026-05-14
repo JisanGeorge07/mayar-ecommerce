@@ -1,4 +1,5 @@
 using System;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -16,8 +17,8 @@ public class CartItem
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }  // Price snapshot for validation
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
+    public DateTime UpdatedAt { get; set; } = DateTimeHelper.GetLocalTime();
     public bool IsActive { get; set; } = true;
 
     // Navigation properties

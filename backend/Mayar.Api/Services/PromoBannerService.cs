@@ -3,6 +3,7 @@ using Mayar.Api.DTOs;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -59,8 +60,8 @@ public class PromoBannerService(AppDbContext context, ICloudinaryService cloudin
 
         var promoBanner = dto.ToPromoBannerEntity();
         promoBanner.Id = Guid.NewGuid();
-        promoBanner.CreatedAt = DateTime.UtcNow;
-        promoBanner.UpdatedAt = DateTime.UtcNow;
+        promoBanner.CreatedAt = DateTimeHelper.GetLocalTime();
+        promoBanner.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         context.PromoBanners.Add(promoBanner);
         await context.SaveChangesAsync();
@@ -115,7 +116,7 @@ public class PromoBannerService(AppDbContext context, ICloudinaryService cloudin
         existingPromoBanner.SortOrder = dto.SortOrder;
         existingPromoBanner.IsActive = dto.IsActive;
         existingPromoBanner.IsPublished = dto.IsPublished;
-        existingPromoBanner.UpdatedAt = DateTime.UtcNow;
+        existingPromoBanner.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         // Update images only if new ones provided
         if (!string.IsNullOrEmpty(dto.DesktopImageUrl))
@@ -155,7 +156,7 @@ public class PromoBannerService(AppDbContext context, ICloudinaryService cloudin
             if (banner != null)
             {
                 banner.SortOrder = i + 1;
-                banner.UpdatedAt = DateTime.UtcNow;
+                banner.UpdatedAt = DateTimeHelper.GetLocalTime();
             }
         }
 

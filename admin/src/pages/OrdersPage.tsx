@@ -36,8 +36,10 @@ import {
 import {
   getOrders, updateOrderStatus, bulkUpdateOrderStatus,
   deleteOrder, deleteOrders, createOrder,
-  type CreateOrderPayload,
+  type CreateOrderPayload, FRONTEND_TO_BACKEND_STATUS
 } from '@/services/orderService';
+import { productService } from '@/services';
+import { Product, ProductVariant } from '@/types';
 import type { Order, OrderStatus, PaymentMethod, PaymentStatus, UpdateSource } from '@/types/order';
 import {
   ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS, UPDATE_SOURCE_LABELS,
@@ -48,29 +50,29 @@ import {
 const fmt = (n: number) => `KD ${n.toFixed(3)}`;
 
 const statusColor: Record<OrderStatus, string> = {
-  pending:          'bg-amber-100 text-amber-800 border-amber-200',
-  confirmed:        'bg-blue-100 text-blue-800 border-blue-200',
-  processing:       'bg-violet-100 text-violet-800 border-violet-200',
-  shipped:          'bg-cyan-100 text-cyan-800 border-cyan-200',
+  pending: 'bg-amber-100 text-amber-800 border-amber-200',
+  confirmed: 'bg-blue-100 text-blue-800 border-blue-200',
+  processing: 'bg-violet-100 text-violet-800 border-violet-200',
+  shipped: 'bg-cyan-100 text-cyan-800 border-cyan-200',
   out_for_delivery: 'bg-orange-100 text-orange-800 border-orange-200',
-  delivered:        'bg-green-100 text-green-800 border-green-200',
-  cancelled:        'bg-red-100 text-red-800 border-red-200',
+  delivered: 'bg-green-100 text-green-800 border-green-200',
+  cancelled: 'bg-red-100 text-red-800 border-red-200',
   return_requested: 'bg-orange-100 text-orange-800 border-orange-200',
-  returned:         'bg-gray-100 text-gray-700 border-gray-200',
+  returned: 'bg-gray-100 text-gray-700 border-gray-200',
   refund_requested: 'bg-rose-100 text-rose-800 border-rose-200',
-  refunded:         'bg-purple-100 text-purple-800 border-purple-200',
+  refunded: 'bg-purple-100 text-purple-800 border-purple-200',
 };
 
 const paymentStatusColor: Record<PaymentStatus, string> = {
-  pending:  'bg-amber-100 text-amber-800 border-amber-200',
-  paid:     'bg-green-100 text-green-800 border-green-200',
-  failed:   'bg-red-100 text-red-800 border-red-200',
+  pending: 'bg-amber-100 text-amber-800 border-amber-200',
+  paid: 'bg-green-100 text-green-800 border-green-200',
+  failed: 'bg-red-100 text-red-800 border-red-200',
   refunded: 'bg-purple-100 text-purple-800 border-purple-200',
 };
 
 const ALL_STATUSES: OrderStatus[] = [
-  'pending','confirmed','processing','shipped','out_for_delivery',
-  'delivered','cancelled','return_requested','returned','refund_requested','refunded',
+  'pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery',
+  'delivered', 'cancelled', 'return_requested', 'returned', 'refund_requested', 'refunded',
 ];
 
 const PAGE_SIZES = [10, 25, 50, 100];
@@ -143,10 +145,10 @@ function printInvoice(order: Order) {
 
 function exportToCSV(orders: Order[]) {
   const headers = [
-    'Order #','Customer Name','Email','Phone',
-    'Items Count','Subtotal (KWD)','Shipping (KWD)','Discount (KWD)','Total (KWD)',
-    'Coupon','Payment Method','Payment Status','Order Status','Created At',
-    'Ship Full Name','Ship Address','Ship City','Ship State','Ship Country','Ship Postal',
+    'Order #', 'Customer Name', 'Email', 'Phone',
+    'Items Count', 'Subtotal (KWD)', 'Shipping (KWD)', 'Discount (KWD)', 'Total (KWD)',
+    'Coupon', 'Payment Method', 'Payment Status', 'Order Status', 'Created At',
+    'Ship Full Name', 'Ship Address', 'Ship City', 'Ship State', 'Ship Country', 'Ship Postal',
   ];
   const rows = orders.map(o => [
     o.orderNumber,
@@ -183,19 +185,19 @@ function exportToCSV(orders: Order[]) {
 
 function downloadImportTemplate() {
   const headers = [
-    'Customer Name','Email','Phone',
-    'Ship Full Name','Ship Address Line 1','Ship Address Line 2','Ship City','Ship State','Ship Country','Ship Postal Code',
-    'Product Name','Variant','SKU','Quantity','Unit Price (KWD)',
-    'Shipping Fee (KWD)','Discount (KWD)','Coupon Code',
-    'Payment Method (credit_card|apple_pay|google_pay|cash_on_delivery)','Payment Status (pending|paid|failed)',
+    'First Name', 'Last Name', 'Email', 'Phone',
+    'Area', 'Block', 'Street', 'Building', 'Floor', 'Flat/Office', 'Address Notes',
+    'Product Name', 'Variant', 'Quantity', 'Unit Price (KWD)',
+    'Shipping Fee (KWD)', 'Discount (KWD)', 'Coupon Code',
+    'Payment Method (credit_card|apple_pay|google_pay|cash_on_delivery)', 'Payment Status (pending|paid|failed)',
     'Customer Note',
   ];
   const example = [
-    'Fatima Al-Rashidi','fatima@example.com','+965 9912 3456',
-    'Fatima Al-Rashidi','Block 4 Street 12','','Salmiya','Hawalli','Kuwait','22045',
-    'Luxury Black Abaya','Black / M','ABY-BLK-M','1','18.500',
-    '1.500','0','',
-    'credit_card','paid',
+    'Fatima', 'Al-Rashidi', 'fatima@example.com', '+965 9912 3456',
+    'Salmiya', '4', '12', '45', '2', '10', 'Near mosque',
+    'Luxury Black Abaya', 'Black / M', '1', '18.500',
+    '1.500', '0', '',
+    'credit_card', 'paid',
     '',
   ];
   const csv = [headers.join(','), example.join(',')].join('\n');
@@ -215,31 +217,57 @@ function parseImportCSV(text: string): CreateOrderPayload[] {
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
     if (cols.length < 15 || !cols[0]) continue;
-    const unitPrice = parseFloat(cols[14]) || 0;
+    
+    // Mapping:
+    // 0: First Name, 1: Last Name, 2: Email, 3: Phone
+    // 4: Area, 5: Block, 6: Street, 7: Building, 8: Floor, 9: Flat/Office, 10: Address Notes
+    // 11: Product Name, 12: Variant, 13: Quantity, 14: Unit Price (KWD)
+    // 15: Shipping Fee (KWD), 16: Discount (KWD), 17: Coupon Code
+    // 18: Payment Method, 19: Payment Status, 20: Customer Note
+
     const qty = parseInt(cols[13]) || 1;
+    const unitPrice = parseFloat(cols[14]) || 0;
     const shippingFee = parseFloat(cols[15]) || 0;
     const discount = parseFloat(cols[16]) || 0;
     const subtotal = unitPrice * qty;
     const total = subtotal + shippingFee - discount;
-    const pmMap: Record<string, PaymentMethod> = {
-      credit_card: 'credit_card', apple_pay: 'apple_pay',
-      google_pay: 'google_pay', cash_on_delivery: 'cash_on_delivery',
-    };
+
     results.push({
-      customer: { id: `imp-${Date.now()}-${i}`, name: cols[0], email: cols[1], phone: cols[2] },
-      shippingAddress: { fullName: cols[3], line1: cols[4], line2: cols[5] || undefined, city: cols[6], state: cols[7], country: cols[8] || 'Kuwait', postalCode: cols[9] },
+      customer: { firstName: cols[0], lastName: cols[1], email: cols[2], phone: cols[3] },
+      address: {
+        area: cols[4],
+        block: cols[5],
+        street: cols[6],
+        building: cols[7],
+        floor: cols[8] || undefined,
+        flatOffice: cols[9] || undefined,
+        notes: cols[10] || undefined
+      },
+      shippingMethod: {
+        id: 'manual',
+        name: { en: 'Standard Shipping', ar: 'شحن قياسي' },
+        estimate: { en: '2-3 days', ar: '2-3 أيام' },
+        price: shippingFee
+      },
+      paymentMethodId: cols[18] === 'cash_on_delivery' ? 'cod' : 'myfatoorah',
       items: [{
-        id: `item-imp-${i}`, productId: '', productName: cols[10],
-        productImage: 'https://placehold.co/60x60/888/white?text=Item',
-        variant: cols[11], sku: cols[12], quantity: qty, unitPrice, totalPrice: unitPrice * qty,
+        productId: '', // Admin creation endpoint usually handles lookup by name or needs valid ID
+        variantId: undefined,
+        nameEn: cols[12] ? `${cols[11]} (${cols[12]})` : cols[11],
+        nameAr: cols[12] ? `${cols[11]} (${cols[12]})` : cols[11], 
+        image: 'https://placehold.co/60x60/888/white?text=Item',
+        quantity: qty,
+        unitPrice,
       }],
-      subtotal, shippingFee, discount,
-      couponCode: cols[17] || undefined,
-      total, currency: 'KWD',
-      paymentMethod: pmMap[cols[18]] ?? 'credit_card',
-      paymentStatus: (['pending','paid','failed'].includes(cols[19]) ? cols[19] : 'pending') as PaymentStatus,
-      status: 'pending',
-      customerNote: cols[20] || undefined,
+      totals: {
+        subtotal,
+        discount,
+        shippingCost: shippingFee,
+        total: Math.max(0, total)
+      },
+      currency: 'KWD',
+      status: 'Pending',
+      paymentStatus: cols[19] ? cols[19].charAt(0).toUpperCase() + cols[19].slice(1) : 'Pending'
     });
   }
   return results;
@@ -299,75 +327,170 @@ function QuickStatus({ order, onUpdated }: { order: Order; onUpdated: (o: Order)
 
 // ─── Add Order Dialog ─────────────────────────────────────────────────────────
 
-interface NewItem { id: string; productName: string; variant: string; sku: string; quantity: number; unitPrice: number; }
+interface NewItem {
+  id: string;
+  productId: string;
+  variantId?: string;
+  productName: string;
+  variant: string;
+  quantity: number;
+  unitPrice: number;
+  image: string;
+  color?: string;
+  size?: string;
+  nameAr: string;
+}
 
 const emptyItem = (): NewItem => ({
   id: Math.random().toString(36).slice(2),
-  productName: '', variant: '', sku: '', quantity: 1, unitPrice: 0,
+  productId: '', variantId: '', productName: '', variant: '', quantity: 1, unitPrice: 0, image: '', nameAr: '',
 });
 
 function AddOrderDialog({ open, onClose, onCreated }: {
   open: boolean; onClose: () => void; onCreated: (o: Order) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   const [f, setF] = useState({
-    customerName: '', customerEmail: '', customerPhone: '',
-    shipFullName: '', shipLine1: '', shipLine2: '',
-    shipCity: '', shipState: '', shipCountry: 'Kuwait', shipPostal: '',
-    paymentMethod: 'credit_card' as PaymentMethod,
+    firstName: '', lastName: '', email: '', phone: '',
+    area: '', block: '', street: '', building: '',
+    floor: '', flatOffice: '', addressNotes: '',
+    paymentMethod: 'cash_on_delivery' as PaymentMethod,
     paymentStatus: 'pending' as PaymentStatus,
-    shippingFee: '1.500', discount: '0.000', couponCode: '',
+    shippingFee: '0.000', discount: '0.000', couponCode: '',
     status: 'pending' as OrderStatus, customerNote: '',
   });
   const [items, setItems] = useState<NewItem[]>([emptyItem()]);
 
+  useEffect(() => {
+    if (open) {
+      loadProducts();
+    }
+  }, [open]);
+
+  const loadProducts = async () => {
+    try {
+      const data = await productService.getProducts();
+      setProducts(data);
+    } catch {
+      toast.error('Failed to load products');
+    }
+  };
+
   const set = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
 
-  const setItem = (id: string, k: keyof NewItem, v: string | number) =>
+  const setItem = (id: string, k: keyof NewItem, v: any) =>
     setItems(prev => prev.map(i => i.id === id ? { ...i, [k]: v } : i));
+
+  const handleProductChange = (itemId: string, productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    setItems(prev => prev.map(i => {
+      if (i.id === itemId) {
+        return {
+          ...i,
+          productId,
+          productName: product.name,
+          nameAr: product.name, // Assuming English name for now if Arabic not in Product type
+          unitPrice: product.base_price_kwd,
+          image: product.image_url || '',
+          variantId: '',
+          variant: '',
+          color: '',
+          size: ''
+        };
+      }
+      return i;
+    }));
+  };
+
+  const handleVariantChange = (itemId: string, variantId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const product = products.find(p => p.id === item.productId);
+    if (!product || !product.variants) return;
+
+    const variant = product.variants.find(v => v.id === variantId);
+    if (!variant) return;
+
+    setItems(prev => prev.map(i => {
+      if (i.id === itemId) {
+        return {
+          ...i,
+          variantId,
+          variant: [variant.color?.nameEnglish, variant.size?.label].filter(Boolean).join(' / ') || 'Default',
+          unitPrice: variant.basePriceKWD || i.unitPrice,
+          image: variant.imageUrl || i.image,
+          color: variant.color?.nameEnglish,
+          size: variant.size?.label
+        };
+      }
+      return i;
+    }));
+  };
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
   const total = subtotal + (parseFloat(f.shippingFee) || 0) - (parseFloat(f.discount) || 0);
 
   const handleSubmit = async () => {
-    if (!f.customerName || !f.customerEmail || !f.shipLine1 || !f.shipCity) {
+    if (!f.firstName || !f.email || !f.area || !f.block || !f.street || !f.building) {
       toast.error('Fill in all required customer and address fields.'); return;
     }
-    if (items.some(i => !i.productName || i.unitPrice <= 0)) {
-      toast.error('Each item must have a product name and a price > 0.'); return;
+    if (items.some(i => !i.productId || i.unitPrice < 0)) {
+      toast.error('Each item must have a product and a valid price.'); return;
     }
     setBusy(true);
     try {
-      const order = await createOrder({
-        customer: { id: `cust-${Date.now()}`, name: f.customerName, email: f.customerEmail, phone: f.customerPhone },
-        shippingAddress: {
-          fullName: f.shipFullName || f.customerName,
-          line1: f.shipLine1, line2: f.shipLine2 || undefined,
-          city: f.shipCity, state: f.shipState, country: f.shipCountry, postalCode: f.shipPostal,
+      const payload: CreateOrderPayload = {
+        customer: { firstName: f.firstName, lastName: f.lastName, email: f.email, phone: f.phone },
+        address: {
+          area: f.area, block: f.block, street: f.street, building: f.building,
+          floor: f.floor || undefined, flatOffice: f.flatOffice || undefined, notes: f.addressNotes || undefined
         },
+        shippingMethod: {
+          id: 'manual',
+          name: { en: 'Standard Shipping', ar: 'شحن قياسي' },
+          estimate: { en: '2-3 days', ar: '2-3 أيام' },
+          price: parseFloat(f.shippingFee) || 0
+        },
+        paymentMethodId: f.paymentMethod === 'cash_on_delivery' ? 'cod' : 'myfatoorah',
         items: items.map(i => ({
-          id: `item-${i.id}`, productId: '', productName: i.productName,
-          productImage: 'https://placehold.co/60x60/888/white?text=Item',
-          variant: i.variant, sku: i.sku, quantity: i.quantity,
-          unitPrice: i.unitPrice, totalPrice: i.quantity * i.unitPrice,
+          productId: i.productId,
+          variantId: i.variantId || undefined,
+          nameEn: i.productName,
+          nameAr: i.nameAr,
+          image: i.image,
+          color: i.color,
+          size: i.size,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
         })),
-        subtotal, shippingFee: parseFloat(f.shippingFee) || 0,
-        discount: parseFloat(f.discount) || 0,
-        couponCode: f.couponCode || undefined,
-        total, currency: 'KWD',
-        paymentMethod: f.paymentMethod, paymentStatus: f.paymentStatus,
-        status: f.status, customerNote: f.customerNote || undefined,
-      });
+        totals: {
+          subtotal,
+          discount: parseFloat(f.discount) || 0,
+          shippingCost: parseFloat(f.shippingFee) || 0,
+          total: Math.max(0, total)
+        },
+        currency: 'KWD',
+        status: FRONTEND_TO_BACKEND_STATUS[f.status],
+        paymentStatus: f.paymentStatus.charAt(0).toUpperCase() + f.paymentStatus.slice(1)
+      };
+
+      const order = await createOrder(payload);
       onCreated(order);
-      toast.success(`Order ${order.orderNumber} created`);
+      toast.success(`Order created successfully`);
       onClose();
-    } catch { toast.error('Failed to create order'); }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to create order');
+    }
     finally { setBusy(false); }
   };
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Order</DialogTitle>
         </DialogHeader>
@@ -376,18 +499,22 @@ function AddOrderDialog({ open, onClose, onCreated }: {
           {/* Customer */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Customer Information</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Name <span className="text-destructive">*</span></Label>
-                <Input placeholder="Full name" value={f.customerName} onChange={e => set('customerName', e.target.value)} />
+                <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
+                <Input placeholder="First name" value={f.firstName} onChange={e => set('firstName', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Last Name</Label>
+                <Input placeholder="Last name" value={f.lastName} onChange={e => set('lastName', e.target.value)} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Email <span className="text-destructive">*</span></Label>
-                <Input type="email" placeholder="email@example.com" value={f.customerEmail} onChange={e => set('customerEmail', e.target.value)} />
+                <Input type="email" placeholder="email@example.com" value={f.email} onChange={e => set('email', e.target.value)} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Phone</Label>
-                <Input placeholder="+965 XXXX XXXX" value={f.customerPhone} onChange={e => set('customerPhone', e.target.value)} />
+                <Input placeholder="+965 XXXX XXXX" value={f.phone} onChange={e => set('phone', e.target.value)} />
               </div>
             </div>
           </div>
@@ -396,36 +523,35 @@ function AddOrderDialog({ open, onClose, onCreated }: {
 
           {/* Shipping Address */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shipping Address</p>
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Full Name</Label>
-                  <Input placeholder="Recipient name" value={f.shipFullName} onChange={e => set('shipFullName', e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Address Line 1 <span className="text-destructive">*</span></Label>
-                  <Input placeholder="Block, Street, House/Apt" value={f.shipLine1} onChange={e => set('shipLine1', e.target.value)} />
-                </div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shipping Address (Kuwait)</p>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Area <span className="text-destructive">*</span></Label>
+                <Input placeholder="e.g. Salmiya" value={f.area} onChange={e => set('area', e.target.value)} />
               </div>
-              <Input placeholder="Address Line 2 (optional)" value={f.shipLine2} onChange={e => set('shipLine2', e.target.value)} />
-              <div className="grid grid-cols-4 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">City <span className="text-destructive">*</span></Label>
-                  <Input placeholder="e.g. Salmiya" value={f.shipCity} onChange={e => set('shipCity', e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">State / Governorate</Label>
-                  <Input placeholder="e.g. Hawalli" value={f.shipState} onChange={e => set('shipState', e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Country</Label>
-                  <Input value={f.shipCountry} onChange={e => set('shipCountry', e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Postal Code</Label>
-                  <Input placeholder="e.g. 22045" value={f.shipPostal} onChange={e => set('shipPostal', e.target.value)} />
-                </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Block <span className="text-destructive">*</span></Label>
+                <Input placeholder="e.g. 4" value={f.block} onChange={e => set('block', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Street <span className="text-destructive">*</span></Label>
+                <Input placeholder="e.g. 12" value={f.street} onChange={e => set('street', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Building/House <span className="text-destructive">*</span></Label>
+                <Input placeholder="e.g. 45" value={f.building} onChange={e => set('building', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Floor</Label>
+                <Input placeholder="e.g. 2" value={f.floor} onChange={e => set('floor', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Flat/Office</Label>
+                <Input placeholder="e.g. 10" value={f.flatOffice} onChange={e => set('flatOffice', e.target.value)} />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label className="text-xs">Address Notes</Label>
+                <Input placeholder="Near mosque, etc." value={f.addressNotes} onChange={e => set('addressNotes', e.target.value)} />
               </div>
             </div>
           </div>
@@ -434,30 +560,66 @@ function AddOrderDialog({ open, onClose, onCreated }: {
 
           {/* Items */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Order Items</p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Order Items</p>
+              <Button variant="outline" size="sm" onClick={() => setItems(p => [...p, emptyItem()])} className="h-7 text-[10px]">
+                <Plus className="mr-1 h-3 w-3" /> Add Item
+              </Button>
+            </div>
             <div className="space-y-2">
-              <div className="grid grid-cols-[2fr_1.5fr_1fr_60px_90px_36px] gap-2 px-1">
-                {['Product Name','Variant','SKU','Qty','Unit Price (KD)',''].map((h,i) => (
+              <div className="grid grid-cols-[2fr_1.5fr_60px_90px_36px] gap-2 px-1">
+                {['Product', 'Variant', 'Qty', 'Unit Price (KD)', ''].map((h, i) => (
                   <p key={i} className="text-[10px] font-semibold uppercase text-muted-foreground">{h}</p>
                 ))}
               </div>
-              {items.map(item => (
-                <div key={item.id} className="grid grid-cols-[2fr_1.5fr_1fr_60px_90px_36px] gap-2 items-center">
-                  <Input placeholder="Product name" value={item.productName} onChange={e => setItem(item.id, 'productName', e.target.value)} className="h-8 text-sm" />
-                  <Input placeholder="Black / M" value={item.variant} onChange={e => setItem(item.id, 'variant', e.target.value)} className="h-8 text-sm" />
-                  <Input placeholder="SKU-001" value={item.sku} onChange={e => setItem(item.id, 'sku', e.target.value)} className="h-8 text-sm" />
-                  <Input type="number" min={1} value={item.quantity} onChange={e => setItem(item.id, 'quantity', parseInt(e.target.value) || 1)} className="h-8 text-sm text-center" />
-                  <Input type="number" min={0} step="0.001" value={item.unitPrice} onChange={e => setItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                    disabled={items.length === 1}
-                    onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setItems(p => [...p, emptyItem()])}>
-                <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Item
-              </Button>
+              {items.map(item => {
+                const product = products.find(p => p.id === item.productId);
+                return (
+                  <div key={item.id} className="grid grid-cols-[2fr_1.5fr_60px_90px_36px] gap-2 items-start">
+                    <div className="space-y-1">
+                      <Select value={item.productId} onValueChange={(v) => handleProductChange(item.id, v)}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select Product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map(p => (
+                            <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      {product && product.variants && product.variants.length > 0 ? (
+                        <Select value={item.variantId} onValueChange={(v) => handleVariantChange(item.id, v)}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Select Variant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {product.variants.map(v => (
+                              <SelectItem key={v.id} value={v.id} className="text-xs">
+                                {[v.color?.nameEnglish, v.size?.label].filter(Boolean).join(' / ')}
+                                {v.stockQuantity !== undefined ? ` (${v.stockQuantity} in stock)` : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="h-8 flex items-center px-3 text-[10px] text-muted-foreground bg-muted/50 rounded-md">No variants</div>
+                      )}
+                    </div>
+
+                    <Input type="number" min={1} value={item.quantity} onChange={e => setItem(item.id, 'quantity', parseInt(e.target.value) || 1)} className="h-8 text-xs text-center" />
+                    <Input type="number" min={0} step="0.001" value={item.unitPrice} onChange={e => setItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className="h-8 text-xs" />
+                    
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                      disabled={items.length === 1}
+                      onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -472,9 +634,8 @@ function AddOrderDialog({ open, onClose, onCreated }: {
                 <Select value={f.paymentMethod} onValueChange={v => set('paymentMethod', v)}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).map(m => (
-                      <SelectItem key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</SelectItem>
-                    ))}
+                    <SelectItem value="cash_on_delivery">Cash on Delivery</SelectItem>
+                    <SelectItem value="credit_card">MyFatoorah (Online)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -515,14 +676,6 @@ function AddOrderDialog({ open, onClose, onCreated }: {
               <span className="text-muted-foreground">Subtotal: <strong>{fmt(subtotal)}</strong></span>
               <span className="text-muted-foreground">Total: <strong className="text-foreground">{fmt(Math.max(0, total))}</strong></span>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Note */}
-          <div className="space-y-1.5">
-            <Label className="text-xs">Customer Note (optional)</Label>
-            <Textarea placeholder="Any special instructions from customer…" rows={2} value={f.customerNote} onChange={e => set('customerNote', e.target.value)} className="resize-none text-sm" />
           </div>
         </div>
 
@@ -616,9 +769,9 @@ function ImportDialog({ open, onClose, onImported }: {
                     {preview.map((o, idx) => (
                       <tr key={idx} className="border-t border-border">
                         <td className="px-3 py-1.5 text-muted-foreground">{idx + 1}</td>
-                        <td className="px-3 py-1.5">{o.customer.name}</td>
-                        <td className="px-3 py-1.5 text-muted-foreground">{o.items[0]?.productName}</td>
-                        <td className="px-3 py-1.5 text-right font-medium">{fmt(o.total)}</td>
+                        <td className="px-3 py-1.5">{`${o.customer.firstName} ${o.customer.lastName}`.trim()}</td>
+                        <td className="px-3 py-1.5 text-muted-foreground">{o.items[0]?.nameEn}</td>
+                        <td className="px-3 py-1.5 text-right font-medium">{fmt(o.totals.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -691,12 +844,12 @@ export default function OrdersPage() {
 
   // ── Stats ──
   const stats = useMemo(() => {
-    const total     = orders.length;
-    const pending   = orders.filter(o => o.status === 'pending').length;
-    const processing = orders.filter(o => ['confirmed','processing'].includes(o.status)).length;
-    const shipped   = orders.filter(o => ['shipped','out_for_delivery'].includes(o.status)).length;
+    const total = orders.length;
+    const pending = orders.filter(o => o.status === 'pending').length;
+    const processing = orders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
+    const shipped = orders.filter(o => ['shipped', 'out_for_delivery'].includes(o.status)).length;
     const delivered = orders.filter(o => o.status === 'delivered').length;
-    const revenue   = orders.filter(o => o.paymentStatus === 'paid' && o.status !== 'refunded')
+    const revenue = orders.filter(o => o.paymentStatus === 'paid' && o.status !== 'refunded')
       .reduce((s, o) => s + o.total, 0);
     return { total, pending, processing, shipped, delivered, revenue };
   }, [orders]);
@@ -713,16 +866,16 @@ export default function OrdersPage() {
         o.customer.phone.includes(q)
       );
     }
-    if (statusFilter !== 'all')  list = list.filter(o => o.status === statusFilter);
+    if (statusFilter !== 'all') list = list.filter(o => o.status === statusFilter);
     if (paymentFilter !== 'all') list = list.filter(o => o.paymentStatus === paymentFilter);
     if (dateAddedFrom) list = list.filter(o => o.createdAt >= dateAddedFrom);
-    if (dateAddedTo)   list = list.filter(o => o.createdAt <= dateAddedTo + 'T23:59:59Z');
+    if (dateAddedTo) list = list.filter(o => o.createdAt <= dateAddedTo + 'T23:59:59Z');
     if (dateModifiedFrom) list = list.filter(o => o.updatedAt >= dateModifiedFrom);
-    if (dateModifiedTo)   list = list.filter(o => o.updatedAt <= dateModifiedTo + 'T23:59:59Z');
+    if (dateModifiedTo) list = list.filter(o => o.updatedAt <= dateModifiedTo + 'T23:59:59Z');
 
     list.sort((a, b) => {
-      if (sortOrder === 'newest')  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      if (sortOrder === 'oldest')  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sortOrder === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortOrder === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       if (sortOrder === 'highest') return b.total - a.total;
       return a.total - b.total;
     });
@@ -731,7 +884,7 @@ export default function OrdersPage() {
 
   // ── Paginated ──
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated  = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // ── Selection helpers ──
   const allPageSelected = paginated.length > 0 && paginated.every(o => selected.has(o.id));
@@ -826,12 +979,12 @@ export default function OrdersPage() {
 
         {/* ── Stats row ── */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <StatCard label="Total Orders"  value={stats.total}        icon={ShoppingBag}   color="bg-primary/10 text-primary" />
-          <StatCard label="Pending"       value={stats.pending}      icon={Clock}         color="bg-amber-100 text-amber-700" />
-          <StatCard label="Processing"    value={stats.processing}   icon={Settings2}     color="bg-violet-100 text-violet-700" />
-          <StatCard label="Shipped"       value={stats.shipped}      icon={Truck}         color="bg-cyan-100 text-cyan-700" />
-          <StatCard label="Delivered"     value={stats.delivered}    icon={CheckCircle2}  color="bg-green-100 text-green-700" />
-          <StatCard label="Revenue"       value={fmt(stats.revenue)} icon={DollarSign}    color="bg-emerald-100 text-emerald-700" />
+          <StatCard label="Total Orders" value={stats.total} icon={ShoppingBag} color="bg-primary/10 text-primary" />
+          <StatCard label="Pending" value={stats.pending} icon={Clock} color="bg-amber-100 text-amber-700" />
+          <StatCard label="Processing" value={stats.processing} icon={Settings2} color="bg-violet-100 text-violet-700" />
+          <StatCard label="Shipped" value={stats.shipped} icon={Truck} color="bg-cyan-100 text-cyan-700" />
+          <StatCard label="Delivered" value={stats.delivered} icon={CheckCircle2} color="bg-green-100 text-green-700" />
+          <StatCard label="Revenue" value={fmt(stats.revenue)} icon={DollarSign} color="bg-emerald-100 text-emerald-700" />
         </div>
 
         {/* ── Action toolbar ── */}
@@ -1043,7 +1196,7 @@ export default function OrdersPage() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                           </svg>
                         </Button>
                       </DropdownMenuTrigger>
@@ -1079,7 +1232,7 @@ export default function OrdersPage() {
                             <AlertTriangle className="mr-2 h-4 w-4 text-rose-600" /> Process Refund
                           </DropdownMenuItem>
                         )}
-                        {['pending','confirmed','processing'].includes(order.status) && (
+                        {['pending', 'confirmed', 'processing'].includes(order.status) && (
                           <DropdownMenuItem className="text-destructive focus:text-destructive"
                             onClick={async () => {
                               const u = await updateOrderStatus({ orderId: order.id, status: 'cancelled', note: 'Cancelled by admin.', updatedBy: 'Admin', source: 'admin' });

@@ -100,7 +100,7 @@ const TrackingPopupGlobal = () => {
                 />
                 <input
                   type="text"
-                  placeholder={isAr ? 'رقم التتبع (مثال: MYR-2024-001)' : 'Tracking ID (e.g. MYR-2024-001)'}
+                  placeholder={isAr ? 'رقم التتبع (مثال: TRK4ECDF105)' : 'Tracking ID (e.g. TRK4ECDF105)'}
                   value={trackingId}
                   onChange={(e) => setTrackingId(e.target.value)}
                   className="w-full h-10 px-3 bg-secondary border-0 rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"

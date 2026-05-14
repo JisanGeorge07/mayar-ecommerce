@@ -114,6 +114,12 @@ export const contentPageService = {
       if (!response.data.success || !response.data.data) {
         return null;
       }
+      
+      // Don't return draft pages to the storefront
+      if (response.data.data.status !== 'published') {
+        return null;
+      }
+
       return toFrontendFormat(response.data.data);
     } catch (error: any) {
       if (error.response?.status === 404) {

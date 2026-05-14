@@ -1,6 +1,7 @@
 using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
 using Mayar.Api.Enums;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Mappings;
 
@@ -14,6 +15,7 @@ public static class OrderMapper
             OrderNumber = order.OrderNumber ?? string.Empty,
             TrackingId = order.TrackingId ?? string.Empty,
             CreatedAt = order.CreatedAt,
+            UpdatedAt = order.UpdatedAt,
             Customer = new CustomerDetailsDto
             {
                 FirstName = order.CustomerFirstName ?? string.Empty,
@@ -62,7 +64,28 @@ public static class OrderMapper
             PromoCode = order.PromoCode,
             Total = order.TotalAmount ?? 0,
             Status = order.Status.ToString().ToLower(),
-            PaymentStatus = order.PaymentStatus.ToString().ToLower()
+            PaymentStatus = order.PaymentStatus.ToString().ToLower(),
+            Notes = order.Notes,
+            AdminNote = order.AdminNote,
+            StatusHistory = order.StatusHistory
+                .OrderBy(h => h.CreatedAt)
+                .Select(h => h.ToDto())
+                .ToList()
+        };
+    }
+
+    public static OrderStatusHistoryDto ToDto(this OrderStatusHistory history)
+    {
+        return new OrderStatusHistoryDto
+        {
+            Id = history.Id,
+            FromStatus = history.FromStatus?.ToString().ToLower(),
+            ToStatus = history.ToStatus?.ToString().ToLower(),
+            Note = history.Note,
+            UpdatedByName = history.UpdatedByName,
+            Source = history.Source,
+            ChangedBy = history.ChangedBy,
+            CreatedAt = history.CreatedAt
         };
     }
 
@@ -71,6 +94,7 @@ public static class OrderMapper
         return new OrderItemDto
         {
             ProductId = item.ProductId,
+            VariantId = item.ProductVariantId,
             Name = new TranslatedTextDto
             {
                 En = item.ProductNameEnglish ?? string.Empty,
@@ -79,6 +103,7 @@ public static class OrderMapper
             Image = item.ProductImageUrl ?? string.Empty,
             Color = item.ProductColor,
             Size = item.ProductSize,
+            Sku = null,
             Quantity = item.Quantity ?? 0,
             UnitPrice = item.UnitPrice ?? 0,
             LineTotal = item.TotalPrice ?? 0
@@ -93,6 +118,18 @@ public static class OrderMapper
             "cod" or "cashondelivery" => PaymentMethod.CashOnDelivery,
             _ => PaymentMethod.MyFatoorah
         };
+
+        var status = OrderStatus.Pending;
+        if (!string.IsNullOrEmpty(dto.Status) && Enum.TryParse<OrderStatus>(dto.Status, true, out var parsedStatus))
+        {
+            status = parsedStatus;
+        }
+
+        var paymentStatus = Enums.PaymentStatus.Pending;
+        if (!string.IsNullOrEmpty(dto.PaymentStatus) && Enum.TryParse<Enums.PaymentStatus>(dto.PaymentStatus, true, out var parsedPaymentStatus))
+        {
+            paymentStatus = parsedPaymentStatus;
+        }
 
         return new Order
         {
@@ -118,8 +155,8 @@ public static class OrderMapper
             ShippingMethodNameAr = dto.ShippingMethod.Name.Ar,
             ShippingEstimateEn = dto.ShippingMethod.Estimate.En,
             ShippingEstimateAr = dto.ShippingMethod.Estimate.Ar,
-            Status = OrderStatus.Pending,
-            PaymentStatus = PaymentStatus.Pending,
+            Status = status,
+            PaymentStatus = paymentStatus,
             PaymentMethod = paymentMethod,
             SubTotal = dto.Totals.Subtotal,
             DiscountAmount = dto.Totals.Discount,
@@ -128,7 +165,7 @@ public static class OrderMapper
             Currency = dto.Currency ?? "KWD",
             PromoCode = dto.PromoCode,
             CouponCodeId = dto.CouponCodeId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime()
         };
     }
 

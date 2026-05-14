@@ -1,6 +1,7 @@
 using System;
 using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Mappings;
 
@@ -51,7 +52,7 @@ public static class SettingsMapper
             LogoUrl = dto.LogoUrl,
             DefaultMetaTitle = dto.DefaultMetaTitle,
             DefaultMetaDescription = dto.DefaultMetaDescription,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
     }
 
@@ -81,8 +82,8 @@ public static class SettingsMapper
             IsEnabled = dto.IsEnabled,
             IsDefault = dto.IsDefault,
             SortOrder = dto.SortOrder,
-            CreatedAt = dto.CreatedAt ?? DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = dto.CreatedAt ?? DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
     }
 
@@ -96,8 +97,8 @@ public static class SettingsMapper
             IsEnabled = dto.IsEnabled,
             IsDefault = dto.IsDefault,
             SortOrder = dto.SortOrder,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
     }
 
@@ -131,8 +132,8 @@ public static class SettingsMapper
             IsVisible = dto.IsVisible,
             IsRequired = dto.IsRequired,
             SortOrder = dto.SortOrder,
-            CreatedAt = dto.CreatedAt ?? DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = dto.CreatedAt ?? DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
     }
 
@@ -148,8 +149,8 @@ public static class SettingsMapper
             IsVisible = dto.IsVisible,
             IsRequired = dto.IsRequired,
             SortOrder = dto.SortOrder,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
     }
 }

@@ -27,6 +27,7 @@ export default function CategoriesPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     try {
@@ -66,7 +67,7 @@ export default function CategoriesPage() {
     }
 
     const slug = form.slug || generateSlug(form.titleEnglish);
-
+    setSaving(true);
     try {
       if (editId) {
         const input: TopCategoryUpdateInput = {
@@ -100,6 +101,8 @@ export default function CategoriesPage() {
       load();
     } catch {
       toast.error('Something went wrong');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -225,8 +228,10 @@ export default function CategoriesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Save'}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : (editId ? 'Update' : 'Save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

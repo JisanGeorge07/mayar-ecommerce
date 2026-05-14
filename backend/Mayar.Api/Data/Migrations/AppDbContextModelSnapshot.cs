@@ -992,11 +992,85 @@ namespace Mayar.Api.Data.Migrations
                     b.ToTable("NewsLetters");
                 });
 
+            modelBuilder.Entity("Mayar.Api.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ConfirmedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsAdminNotification")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("MessageArabic")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("MessageEnglish")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReferenceId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ReferenceType")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TitleArabic")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TitleEnglish")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("Mayar.Api.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("AdminNote")
+                        .HasColumnType("longtext");
 
                     b.Property<Guid?>("CouponCodeId")
                         .HasColumnType("char(36)");
@@ -1019,11 +1093,17 @@ namespace Mayar.Api.Data.Migrations
                     b.Property<string>("CustomerPhone")
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime?>("DeliveredAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<decimal?>("DiscountAmount")
                         .HasColumnType("decimal(65,30)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
@@ -1197,8 +1277,14 @@ namespace Mayar.Api.Data.Migrations
                     b.Property<Guid>("OrderId")
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("Source")
+                        .HasColumnType("longtext");
+
                     b.Property<int?>("ToStatus")
                         .HasColumnType("int");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -1905,7 +1991,7 @@ namespace Mayar.Api.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("39e42faa-6306-4a6d-b868-8957d3cff5de"),
+                            Id = new Guid("dbaab5ed-1dc8-4df7-92fe-691543bf5982"),
                             DescriptionArabic = "على الطلبات التي تزيد عن 10 دنانير كويتية",
                             DescriptionEnglish = "On orders over 10 KWD",
                             IconName = "Truck",
@@ -1915,7 +2001,7 @@ namespace Mayar.Api.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6d649038-1bca-4436-8880-0d27ef1aa473"),
+                            Id = new Guid("02e9071c-d1a2-43fc-a4f3-dab44084ea04"),
                             DescriptionArabic = "سياسة إرجاع لمدة 14 يومًا",
                             DescriptionEnglish = "14 day return policy",
                             IconName = "RotateCcw",
@@ -1925,7 +2011,7 @@ namespace Mayar.Api.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("3d038490-31c7-43a5-b05c-d32d17170f47"),
+                            Id = new Guid("8150229a-919e-48f9-ac36-5087ce1991e5"),
                             DescriptionArabic = "الدفع المشفر",
                             DescriptionEnglish = "Encrypted checkout",
                             IconName = "Shield",
@@ -1935,7 +2021,7 @@ namespace Mayar.Api.Data.Migrations
                         },
                         new
                         {
-                            Id = new Guid("8b9f534f-91de-4f16-bc41-1e6117300eef"),
+                            Id = new Guid("de71732e-c0b9-4ca4-b58f-46d93a3844a9"),
                             DescriptionArabic = "100% أصلي",
                             DescriptionEnglish = "100% genuine",
                             IconName = "CheckCircle",
@@ -1998,10 +2084,10 @@ namespace Mayar.Api.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("c3d49b7d-0df8-4e92-8de6-41cd66ca8a5f"),
+                            Id = new Guid("d9edc079-1fdc-4ed4-965f-6f7d8e52c72c"),
                             Email = "admin@mayar.com",
                             Name = "Admin",
-                            PasswordHash = "$2a$11$UdmF5VmbDM.Ev.mbpzloTOCbvzEgQRsuq1uR6TUglWZYcfnXr.s1a",
+                            PasswordHash = "$2a$11$nbhg.F82q9aAkRLW5YV2m.fZ4mhhHUcvTlvnNLLSIVkQZ25SLo5Su",
                             Role = "Admin"
                         });
                 });
@@ -2218,6 +2304,15 @@ namespace Mayar.Api.Data.Migrations
                 });
 
             modelBuilder.Entity("Mayar.Api.Entities.NewsLetter", b =>
+                {
+                    b.HasOne("Mayar.Api.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mayar.Api.Entities.Notification", b =>
                 {
                     b.HasOne("Mayar.Api.Entities.User", "User")
                         .WithMany()

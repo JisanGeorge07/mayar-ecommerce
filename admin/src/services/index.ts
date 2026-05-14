@@ -264,6 +264,32 @@ function mapProductDtoToProduct(dto: ProductDto): Product {
     rating: dto.rating || 0,
     review_count: dto.reviewCount || 0,
     image_url: finalImage,
+    variants: dto.variants?.map(v => ({
+      id: v.id,
+      productId: v.productId,
+      productColorId: v.productColorId,
+      productSizeId: v.productSizeId,
+      basePriceKWD: v.basePriceKWD,
+      compareAtPriceKWD: v.compareAtPriceKWD,
+      basePriceINR: v.basePriceINR,
+      compareAtPriceINR: v.compareAtPriceINR,
+      stockQuantity: v.stockQuantity,
+      inStock: v.inStock,
+      isDefault: v.isDefault,
+      color: v.color ? {
+        id: v.color.id,
+        nameEnglish: v.color.nameEnglish || '',
+        nameArabic: v.color.nameArabic || '',
+        hex: v.color.hex || '',
+        isActive: v.color.isActive
+      } : undefined,
+      size: v.size ? {
+        id: v.size.id,
+        label: v.size.label || '',
+        isActive: v.size.isActive
+      } : undefined,
+      imageUrl: v.imageUrl
+    })) || [],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

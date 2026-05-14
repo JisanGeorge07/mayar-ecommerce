@@ -3,6 +3,7 @@ using Mayar.Api.DTOs;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -78,8 +79,8 @@ public class HeroSlideService(AppDbContext context, ICloudinaryService cloudinar
         }
 
         var heroSlide = heroSlideDto.ToHeroSlideEntity();
-        heroSlide.CreatedAt = DateTime.UtcNow;
-        heroSlide.UpdatedAt = DateTime.UtcNow;
+        heroSlide.CreatedAt = DateTimeHelper.GetLocalTime();
+        heroSlide.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         context.HeroSlides.Add(heroSlide);
         await context.SaveChangesAsync();
@@ -139,7 +140,7 @@ public class HeroSlideService(AppDbContext context, ICloudinaryService cloudinar
         existingHeroSlide.SortOrder = heroSlideDto.SortOrder;
         existingHeroSlide.IsActive = heroSlideDto.IsActive;
         existingHeroSlide.IsPublished = heroSlideDto.IsPublished;
-        existingHeroSlide.UpdatedAt = DateTime.UtcNow;
+        existingHeroSlide.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         // Update images only if new URLs are provided
         if (!string.IsNullOrEmpty(heroSlideDto.DesktopImageUrl))
@@ -187,7 +188,7 @@ public class HeroSlideService(AppDbContext context, ICloudinaryService cloudinar
             if (slide != null)
             {
                 slide.SortOrder = i + 1;
-                slide.UpdatedAt = DateTime.UtcNow;
+                slide.UpdatedAt = DateTimeHelper.GetLocalTime();
             }
         }
 

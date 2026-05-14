@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Mappings;
 
@@ -58,7 +59,7 @@ public static class ContactMapper
             MetaDescriptionEn = contact.MetaDescriptionEn,
             MetaDescriptionAr = contact.MetaDescriptionAr,
             Status = contact.Status,
-            UpdatedAt = contact.UpdatedAt
+            UpdatedAt = DateTime.SpecifyKind(contact.UpdatedAt, DateTimeKind.Utc)
         };
     }
 
@@ -80,8 +81,8 @@ public static class ContactMapper
             MetaDescriptionEn = dto.MetaDescriptionEn,
             MetaDescriptionAr = dto.MetaDescriptionAr,
             Status = dto.Status,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
 
         return contact;

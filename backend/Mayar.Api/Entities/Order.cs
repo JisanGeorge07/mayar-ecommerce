@@ -1,5 +1,5 @@
-using System;
 using Mayar.Api.Enums;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -56,7 +56,10 @@ public class Order
     public Guid? CouponCodeId { get; set; }
     public CouponCode? CouponCode { get; set; }
     public string? Notes { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? AdminNote { get; set; }
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
     public DateTime? UpdatedAt { get; set; }
     public DateTime? ShippedAt { get; set; }
     public DateTime? DeliveredAt { get; set; }

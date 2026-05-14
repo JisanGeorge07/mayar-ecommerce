@@ -104,6 +104,7 @@ export interface Product {
   rating: number;
   review_count: number;
   image_url?: string;
+  variants?: ProductVariant[];
   created_at: string;
   updated_at: string;
 }

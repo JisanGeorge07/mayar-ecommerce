@@ -102,21 +102,17 @@ const AboutPage = () => {
     return t(c.mission);
   };
 
-  // Get contact items from API or fall back to mock
+  // Get contact items from API or fall back to empty
   const getContactItems = () => {
     if (aboutData && aboutData.contactItems && aboutData.contactItems.length > 0) {
       return aboutData.contactItems.map(item => ({
         icon: iconMap[item.icon] || MapPin,
         label: isAr ? (item.labelArabic || item.labelEnglish) : item.labelEnglish,
+        actionType: item.actionType,
+        actionValue: item.actionValue,
       }));
     }
-    // Fall back to mock data
-    return [
-      { icon: MapPin, label: t(contactInfo.address) },
-      { icon: Phone, label: contactInfo.phone },
-      { icon: Mail, label: contactInfo.email },
-      { icon: Clock, label: t(contactInfo.workingHours) },
-    ];
+    return [];
   };
 
   const contactItems = getContactItems();
@@ -242,12 +238,36 @@ const AboutPage = () => {
             <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {contactItems.map((item, index) => {
                 const IconComponent = item.icon;
-                return (
-                  <div key={index} className="flex flex-col items-center gap-2">
+                const content = (
+                  <div className="flex flex-col items-center gap-2">
                     <IconComponent size={20} className="text-brand" />
                     <span className="text-xs text-white/80">{item.label}</span>
                   </div>
                 );
+
+                if (item.actionType === 'phone') {
+                  return (
+                    <a key={index} href={`tel:${item.actionValue}`} className="group transition-transform hover:scale-105">
+                      {content}
+                    </a>
+                  );
+                }
+                if (item.actionType === 'email') {
+                  return (
+                    <a key={index} href={`mailto:${item.actionValue}`} className="group transition-transform hover:scale-105">
+                      {content}
+                    </a>
+                  );
+                }
+                if (item.actionType === 'link' || item.actionType === 'map') {
+                  return (
+                    <a key={index} href={item.actionValue} target="_blank" rel="noopener noreferrer" className="group transition-transform hover:scale-105">
+                      {content}
+                    </a>
+                  );
+                }
+
+                return <div key={index}>{content}</div>;
               })}
             </div>
           </div>

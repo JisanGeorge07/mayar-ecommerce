@@ -129,6 +129,28 @@ public class OrderController : ControllerBase
         }
     }
 
+    [HttpGet("by-tracking/{trackingId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetOrderByTrackingId(string trackingId, [FromQuery] string? phone = null)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderByTrackingIdAsync(trackingId, phone);
+
+            if (order == null)
+            {
+                return NotFound(new { message = "Order not found" });
+            }
+
+            return Ok(order);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get order by tracking ID {TrackingId}", trackingId);
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetUserOrders()
     {
@@ -191,6 +213,128 @@ public class OrderController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to cancel order {OrderId}", id);
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // ─── Admin endpoints ──────────────────────────────────────────────────────
+
+    [HttpGet("admin/all")]
+    public async Task<IActionResult> GetAllOrders()
+    {
+        try
+        {
+            var orders = await _orderService.GetAllOrdersAsync();
+            return Ok(orders);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get all orders");
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("admin/{id:guid}")]
+    public async Task<IActionResult> GetOrderByIdAdmin(Guid id)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderByIdAdminAsync(id);
+
+            if (order == null)
+            {
+                return NotFound(new { message = "Order not found" });
+            }
+
+            return Ok(order);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get order {OrderId} (admin)", id);
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("admin/{id:guid}")]
+    public async Task<IActionResult> DeleteOrder(Guid id)
+    {
+        try
+        {
+            var result = await _orderService.SoftDeleteOrderAsync(id);
+
+            if (!result)
+            {
+                return NotFound(new { message = "Order not found" });
+            }
+
+            return Ok(new { message = "Order deleted successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete order {OrderId}", id);
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("admin/bulk-delete")]
+    public async Task<IActionResult> BulkDeleteOrders([FromBody] BulkDeleteOrdersDto dto)
+    {
+        try
+        {
+            var result = await _orderService.SoftDeleteOrdersAsync(dto.Ids);
+
+            if (!result)
+            {
+                return NotFound(new { message = "No orders found to delete" });
+            }
+
+            return Ok(new { message = $"Deleted {dto.Ids.Count} orders successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to bulk delete orders");
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPatch("admin/{id:guid}/admin-note")]
+    public async Task<IActionResult> UpdateAdminNote(Guid id, [FromBody] UpdateAdminNoteDto dto)
+    {
+        try
+        {
+            var order = await _orderService.UpdateAdminNoteAsync(id, dto.Note);
+
+            if (order == null)
+            {
+                return NotFound(new { message = "Order not found" });
+            }
+
+            return Ok(order);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update admin note for order {OrderId}", id);
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("admin/create")]
+    public async Task<IActionResult> CreateOrderAdmin([FromBody] CreateOrderDto dto)
+    {
+        try
+        {
+            _logger.LogInformation("Admin creating manual order");
+
+            var order = await _orderService.CreateAdminOrderAsync(dto);
+
+            _logger.LogInformation("Admin order created successfully. ID: {OrderId}, OrderNumber: {OrderNumber}",
+                order.Id, order.OrderNumber);
+
+            return CreatedAtAction(nameof(GetOrderByIdAdmin), new { id = order.Id }, order);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create order by admin");
             return BadRequest(new { message = ex.Message });
         }
     }

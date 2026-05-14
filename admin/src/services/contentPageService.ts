@@ -142,7 +142,7 @@ function toBackendFormat(data: AdminContentPageData): Partial<ContentPageDto> {
     effectiveDate: data.effective_date ? `${data.effective_date}T00:00:00Z` : null,
     lastRevisedDate: data.last_revised_date ? `${data.last_revised_date}T00:00:00Z` : null,
     status: data.status,
-    isActive: data.status === 'published',
+    isActive: true, // Content pages should always be active in the system; visibility is managed by 'status'
     sections: data.sections.map(s => ({
       id: s.id,
       contentPageId: data.id,

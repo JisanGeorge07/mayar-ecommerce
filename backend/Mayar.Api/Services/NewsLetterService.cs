@@ -4,6 +4,7 @@ using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -45,7 +46,7 @@ public class NewsLetterService(AppDbContext context) : INewsLetterService
             Id = Guid.NewGuid(),
             UserId = dto.UserId,
             Email = dto.Email,
-            SubscribedAt = DateTime.UtcNow,
+            SubscribedAt = DateTimeHelper.GetLocalTime(),
             IsActive = true
         };
 

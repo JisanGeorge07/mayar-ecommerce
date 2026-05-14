@@ -6,6 +6,7 @@ using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -38,7 +39,7 @@ public class AboutService(AppDbContext context) : IAboutService
             // Create new About with related entities
             about = aboutDto.ToAboutEntity();
             about.Id = Guid.NewGuid();
-            about.UpdatedAt = DateTime.UtcNow;
+            about.UpdatedAt = DateTimeHelper.GetLocalTime();
 
             // Add paragraphs
             if (aboutDto.Paragraphs != null)
@@ -94,7 +95,7 @@ public class AboutService(AppDbContext context) : IAboutService
             about.MetaDescriptionArabic = aboutDto.MetaDescriptionArabic ?? string.Empty;
 
             about.Status = aboutDto.Status ?? "draft";
-            about.UpdatedAt = DateTime.UtcNow;
+            about.UpdatedAt = DateTimeHelper.GetLocalTime();
 
             // Update paragraphs - remove ALL existing paragraphs for this About and add new ones
             await context.AboutParagraphs.Where(p => p.AboutId == about.Id).ExecuteDeleteAsync();

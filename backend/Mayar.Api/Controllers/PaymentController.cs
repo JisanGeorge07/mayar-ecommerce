@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Controllers;
 
@@ -204,7 +205,7 @@ public class PaymentController : ControllerBase
                 {
                     mock = true,
                     status = dto.Status,
-                    timestamp = DateTime.UtcNow
+                    timestamp = DateTimeHelper.GetLocalTime()
                 });
                 existingPayment.CallbackResponse = System.Text.Json.JsonSerializer.Serialize(new
                 {
@@ -216,10 +217,10 @@ public class PaymentController : ControllerBase
                     invoiceId = dto.InvoiceId,
                     paidAmount = dto.Amount,
                     paidCurrency = dto.Currency,
-                    completedAt = DateTime.UtcNow
+                    completedAt = DateTimeHelper.GetLocalTime()
                 });
                 existingPayment.ErrorResponse = dto.Status.ToUpper() == "FAILED" ? "Mock payment failed" : null;
-                existingPayment.UpdatedAt = DateTime.UtcNow;
+                existingPayment.UpdatedAt = DateTimeHelper.GetLocalTime();
 
                 payment = existingPayment;
             }
@@ -245,7 +246,7 @@ public class PaymentController : ControllerBase
                     {
                         mock = true,
                         status = dto.Status,
-                        timestamp = DateTime.UtcNow
+                        timestamp = DateTimeHelper.GetLocalTime()
                     }),
                     CallbackResponse = System.Text.Json.JsonSerializer.Serialize(new
                     {
@@ -257,11 +258,11 @@ public class PaymentController : ControllerBase
                         invoiceId = dto.InvoiceId,
                         paidAmount = dto.Amount,
                         paidCurrency = dto.Currency,
-                        completedAt = DateTime.UtcNow
+                        completedAt = DateTimeHelper.GetLocalTime()
                     }),
                     ErrorResponse = dto.Status.ToUpper() == "FAILED" ? "Mock payment failed" : null,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = DateTimeHelper.GetLocalTime(),
+                    UpdatedAt = DateTimeHelper.GetLocalTime()
                 };
 
                 context.Payments.Add(payment);

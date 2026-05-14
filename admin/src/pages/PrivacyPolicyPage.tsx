@@ -54,10 +54,11 @@ export default function PrivacyPolicyPage() {
 
   const toggleOpen = (id: string) => setOpenSections((p) => ({ ...p, [id]: !p[id] }));
 
-  const save = async (status: 'draft' | 'published') => {
-    const saved = await privacyPolicyService.saveData({ ...data, status });
+  const save = async (forceStatus?: 'draft' | 'published') => {
+    const finalStatus = forceStatus || data.status;
+    const saved = await privacyPolicyService.saveData({ ...data, status: finalStatus });
     setData(saved);
-    toast.success(status === 'published' ? 'Privacy Policy published successfully' : 'Privacy Policy saved as draft');
+    toast.success(finalStatus === 'published' ? 'Privacy Policy published successfully' : 'Privacy Policy saved as draft');
   };
 
   return (
@@ -198,7 +199,7 @@ export default function PrivacyPolicyPage() {
       {/* Sticky action bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card px-6 py-3 flex justify-end gap-3">
         <Button variant="outline" onClick={() => save('draft')}>Save Draft</Button>
-        <Button onClick={() => save('published')}>Publish</Button>
+        <Button onClick={() => save()}>Publish</Button>
       </div>
     </AdminLayout>
   );

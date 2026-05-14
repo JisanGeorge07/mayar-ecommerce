@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -27,8 +28,8 @@ public class Contact
 
     // Page Settings
     public string Status { get; set; } = "draft"; // "draft" or "published"
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
+    public DateTime UpdatedAt { get; set; } = DateTimeHelper.GetLocalTime();
 
     // Navigation property for contact cards
     public ICollection<ContactCard> ContactCards { get; set; } = new List<ContactCard>();

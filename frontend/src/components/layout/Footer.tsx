@@ -1,10 +1,17 @@
 import { useLocale } from '@/hooks/useLocale';
 import { Link } from 'react-router-dom';
 import logoWhite from '@/assets/logo-white.png';
+import { useState, useEffect } from 'react';
+import { pageVisibilityService, type PageVisibilityMap } from '@/services/api/pageVisibilityService';
 
 const Footer = () => {
   const { lang } = useLocale();
   const t = (en: string, ar: string) => lang === 'ar' ? ar : en;
+  const [visibilities, setVisibilities] = useState<PageVisibilityMap>({});
+
+  useEffect(() => {
+    pageVisibilityService.getPageVisibilities().then(setVisibilities);
+  }, []);
 
   const columns = [
     {
@@ -34,6 +41,18 @@ const Footer = () => {
     },
   ];
 
+  const filteredColumns = columns.map(col => ({
+    ...col,
+    links: col.links.filter(link => {
+      // Get the page type from href (e.g., /contact -> contact)
+      const pageKey = link.href.replace('/', '');
+      if (pageKey && visibilities[pageKey]) {
+        return visibilities[pageKey] === 'published';
+      }
+      return true; // Show by default if not a managed page
+    }),
+  })).filter(col => col.links.length > 0);
+
   return (
     <footer className="bg-header text-header-foreground">
       <div className="container py-6 md:py-16">
@@ -48,7 +67,7 @@ const Footer = () => {
               )}
             </p>
           </div>
-          {columns.map(col => (
+          {filteredColumns.map(col => (
             <div key={col.title}>
               <h4 className="font-medium text-sm mb-4">{col.title}</h4>
               <ul className="space-y-2.5">

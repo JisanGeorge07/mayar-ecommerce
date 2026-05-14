@@ -35,6 +35,7 @@ export default function ProductTypesPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
   const [formCatId, setFormCatId] = useState('');
 
   const load = async () => {
@@ -104,7 +105,7 @@ export default function ProductTypesPage() {
     }
 
     const slug = form.slug || generateSlug(form.nameEnglish);
-
+    setSaving(true);
     try {
       if (editId) {
         await bottomCategoryService.update(editId, {
@@ -138,6 +139,8 @@ export default function ProductTypesPage() {
       load();
     } catch {
       toast.error('Something went wrong');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -312,8 +315,10 @@ export default function ProductTypesPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Save'}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : (editId ? 'Update' : 'Save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

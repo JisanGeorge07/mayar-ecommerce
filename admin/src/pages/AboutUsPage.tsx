@@ -55,14 +55,15 @@ export default function AboutUsPage() {
   const removeContact = (id: string) =>
     set('contact_items', form.contact_items.filter(c => c.id !== id));
 
-  const handleSave = async (publish: boolean) => {
+  const handleSave = async (forceStatus?: 'draft' | 'published') => {
     if (saving) return;
     setSaving(true);
     try {
-      const data = { ...form, status: publish ? 'published' as const : 'draft' as const };
+      const data = { ...form };
+      if (forceStatus) data.status = forceStatus;
       const savedData = await aboutUsService.saveData(data);
       setForm(savedData);
-      toast.success(publish ? 'About Us page published successfully' : 'About Us page saved as draft');
+      toast.success(data.status === 'published' ? 'About Us page published successfully' : 'About Us page saved as draft');
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || 'Failed to save About Us page. Please try again.';
       toast.error(message);
@@ -338,11 +339,11 @@ export default function AboutUsPage() {
 
       {/* Sticky Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card px-6 py-3 flex items-center justify-end gap-3">
-        <Button variant="outline" onClick={() => handleSave(false)} disabled={saving}>
+        <Button variant="outline" onClick={() => handleSave('draft')} disabled={saving}>
           {saving ? 'Saving...' : 'Save Draft'}
         </Button>
-        <Button onClick={() => handleSave(true)} disabled={saving}>
-          {saving ? 'Publishing...' : 'Publish'}
+        <Button onClick={() => handleSave()} disabled={saving}>
+          {saving ? 'Saving...' : 'Publish'}
         </Button>
       </div>
     </AdminLayout>

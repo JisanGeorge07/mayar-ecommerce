@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const pendingNotifs = notifications.filter(n => n.status === 'published' && !n.read).length;
+  const pendingNotifs = notifications.filter(n => n.status === 'published' && !n.isRead).length;
 
   const loadData = async () => {
     setLoading(true);

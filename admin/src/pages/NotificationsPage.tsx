@@ -13,7 +13,7 @@ const PRIORITIES: NotificationPriority[] = ['low', 'medium', 'high', 'critical']
 const typeLabel = (t: string) => t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 export default function NotificationsPage() {
-  const { notifications, markAsRead, markAllAsRead, updateNotification, deleteNotification } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead, confirmNotification, deleteNotification } = useNotifications();
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterRead, setFilterRead] = useState('');
@@ -22,8 +22,8 @@ export default function NotificationsPage() {
   const filtered = notifications.filter(n => {
     if (filterType && n.type !== filterType) return false;
     if (filterStatus && n.status !== filterStatus) return false;
-    if (filterRead === 'read' && !n.read) return false;
-    if (filterRead === 'unread' && n.read) return false;
+    if (filterRead === 'read' && !n.isRead) return false;
+    if (filterRead === 'unread' && n.isRead) return false;
     return true;
   });
 
@@ -33,15 +33,8 @@ export default function NotificationsPage() {
   };
 
   const handleConfirm = (id: string) => {
-    updateNotification(id, {
-      confirmedBy: 'CMS Handler',
-      confirmedAt: new Date().toISOString(),
-      isConfirmed: true,
-    } as any);
-    markAsRead(id);
+    confirmNotification(id);
   };
-
-  const confirmedStatus = (n: any) => n.isConfirmed;
 
   return (
     <AdminLayout>
@@ -93,8 +86,8 @@ export default function NotificationsPage() {
             </thead>
             <tbody>
               {filtered.map(n => (
-                <tr key={n.id} className={cn('border-b border-border last:border-0', !n.read && 'bg-primary/5')}>
-                  <td className="px-4 py-3 font-medium">{n.title}</td>
+                <tr key={n.id} className={cn('border-b border-border last:border-0', !n.isRead && 'bg-primary/5')}>
+                  <td className="px-4 py-3 font-medium">{n.titleEnglish}</td>
                   <td className="px-4 py-3">{typeLabel(n.type)}</td>
                   <td className="px-4 py-3">
                     <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold',
@@ -111,7 +104,7 @@ export default function NotificationsPage() {
                     )}>{n.status}</span>
                   </td>
                   <td className="px-4 py-3">
-                    {confirmedStatus(n) ? (
+                    {n.isConfirmed ? (
                       <span className="rounded-full bg-success/10 text-success px-2 py-0.5 text-xs font-semibold">Confirmed</span>
                     ) : (
                       <span className="rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-xs font-semibold">Pending</span>
@@ -121,7 +114,7 @@ export default function NotificationsPage() {
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button onClick={() => handleView(n)} className="rounded p-1 hover:bg-muted" title="View"><Eye className="h-4 w-4 text-muted-foreground" /></button>
-                      {!confirmedStatus(n) && (
+                      {!n.isConfirmed && (
                         <button onClick={() => handleConfirm(n.id)} className="rounded p-1 hover:bg-success/10" title="Confirm">
                           <CheckCircle2 className="h-4 w-4 text-success" />
                         </button>
@@ -145,7 +138,7 @@ export default function NotificationsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="w-full max-w-2xl rounded-xl bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-start justify-between mb-6">
-                <h3 className="font-display text-lg font-bold text-foreground">{viewNotif.title}</h3>
+                <h3 className="font-display text-lg font-bold text-foreground">{viewNotif.titleEnglish}</h3>
                 <button onClick={() => setViewNotif(null)} className="rounded p-1 hover:bg-muted">
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
@@ -153,7 +146,7 @@ export default function NotificationsPage() {
 
               <div className="space-y-4">
                 <div className="rounded-lg border border-border p-4 bg-background">
-                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{viewNotif.message}</p>
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{viewNotif.messageEnglish}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -179,32 +172,30 @@ export default function NotificationsPage() {
                     <p className="text-sm font-medium">{new Date(viewNotif.createdAt).toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Created By</p>
-                    <p className="text-sm font-medium">{viewNotif.createdBy || 'System'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Target Module</p>
-                    <p className="text-sm font-medium">{viewNotif.targetModule || '—'}</p>
-                  </div>
-                  <div>
                     <p className="text-xs text-muted-foreground mb-1">Confirmation</p>
-                    {confirmedStatus(viewNotif) ? (
+                    {viewNotif.isConfirmed ? (
                       <span className="rounded-full bg-success/10 text-success px-2 py-0.5 text-xs font-semibold">Confirmed</span>
                     ) : (
                       <span className="rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-xs font-semibold">Pending</span>
                     )}
                   </div>
-                  {(viewNotif as any).confirmedAt && (
+                  {viewNotif.confirmedAt && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Confirmed At</p>
-                      <p className="text-sm font-medium">{new Date((viewNotif as any).confirmedAt).toLocaleString()}</p>
+                      <p className="text-sm font-medium">{new Date(viewNotif.confirmedAt).toLocaleString()}</p>
+                    </div>
+                  )}
+                  {viewNotif.confirmedBy && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Confirmed By</p>
+                      <p className="text-sm font-medium">{viewNotif.confirmedBy}</p>
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="mt-6 flex justify-end gap-2">
-                {!confirmedStatus(viewNotif) && (
+                {!viewNotif.isConfirmed && (
                   <button onClick={() => { handleConfirm(viewNotif.id); setViewNotif({ ...viewNotif, isConfirmed: true, confirmedAt: new Date().toISOString() } as any); }}
                     className="flex items-center gap-1.5 rounded-md bg-success px-4 py-2 text-sm font-semibold text-success-foreground hover:bg-success/90 transition-colors">
                     <CheckCircle2 className="h-4 w-4" /> Confirm

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -39,5 +40,5 @@ public class Wishlist
 
     public string? ImageUrl { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
 }

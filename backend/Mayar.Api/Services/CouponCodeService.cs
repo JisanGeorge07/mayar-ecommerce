@@ -4,6 +4,7 @@ using Mayar.Api.Enums;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -21,7 +22,7 @@ public class CouponCodeService(AppDbContext context) : ICouponCodeService
 
     public async Task<List<CouponCodeDto>> GetActiveAsync()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTimeHelper.GetLocalTime();
         var coupons = await context.CouponCodes
             .Where(c => c.Status == CouponStatus.Active &&
                        (c.StartDate == null || c.StartDate <= now) &&
@@ -34,7 +35,7 @@ public class CouponCodeService(AppDbContext context) : ICouponCodeService
 
     public async Task<List<CouponCodeDto>> GetCartSuggestionsAsync()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTimeHelper.GetLocalTime();
         var coupons = await context.CouponCodes
             .Where(c => c.Status == CouponStatus.Active &&
                        c.ShowInCartSuggestions &&
@@ -74,8 +75,8 @@ public class CouponCodeService(AppDbContext context) : ICouponCodeService
         coupon.Id = Guid.NewGuid();
         coupon.Code = coupon.Code.ToUpper();
         coupon.UsedCount = 0;
-        coupon.CreatedAt = DateTime.UtcNow;
-        coupon.UpdatedAt = DateTime.UtcNow;
+        coupon.CreatedAt = DateTimeHelper.GetLocalTime();
+        coupon.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         context.CouponCodes.Add(coupon);
         await context.SaveChangesAsync();
@@ -124,7 +125,7 @@ public class CouponCodeService(AppDbContext context) : ICouponCodeService
         existingCoupon.EndDate = dto.EndDate;
         existingCoupon.ShowInCartSuggestions = dto.ShowInCartSuggestions;
         existingCoupon.DisplayOrder = dto.DisplayOrder;
-        existingCoupon.UpdatedAt = DateTime.UtcNow;
+        existingCoupon.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         await context.SaveChangesAsync();
 
@@ -156,7 +157,7 @@ public class CouponCodeService(AppDbContext context) : ICouponCodeService
         coupon.Status = coupon.Status == CouponStatus.Active
             ? CouponStatus.Inactive
             : CouponStatus.Active;
-        coupon.UpdatedAt = DateTime.UtcNow;
+        coupon.UpdatedAt = DateTimeHelper.GetLocalTime();
 
         await context.SaveChangesAsync();
 
@@ -188,7 +189,7 @@ public class CouponCodeService(AppDbContext context) : ICouponCodeService
         }
 
         // Check start date
-        var now = DateTime.UtcNow;
+        var now = DateTimeHelper.GetLocalTime();
         if (coupon.StartDate.HasValue && coupon.StartDate.Value > now)
         {
             return new CouponValidationResponse

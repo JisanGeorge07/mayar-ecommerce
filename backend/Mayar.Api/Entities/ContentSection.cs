@@ -1,4 +1,5 @@
 using System;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -12,7 +13,7 @@ public class ContentSection
     public string BodyAr { get; set; } = string.Empty;
     public int DisplayOrder { get; set; }
     public bool IsActive { get; set; } = true;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
 
     // Navigation property
     public ContentPage ContentPage { get; set; } = null!;

@@ -15,6 +15,8 @@ public class CreateOrderDto
     public string? PromoCode { get; set; }
     public Guid? CouponCodeId { get; set; }
     public string? Currency { get; set; } = "KWD";
+    public string? Status { get; set; }
+    public string? PaymentStatus { get; set; }
 }
 
 public class CustomerDetailsDto
@@ -72,6 +74,7 @@ public class OrderDto
     public string OrderNumber { get; set; } = string.Empty;
     public string TrackingId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     public CustomerDetailsDto Customer { get; set; } = new();
     public OrderAddressDto Address { get; set; } = new();
     public OrderShippingDto Shipping { get; set; } = new();
@@ -84,6 +87,21 @@ public class OrderDto
     public decimal Total { get; set; }
     public string Status { get; set; } = string.Empty;
     public string PaymentStatus { get; set; } = string.Empty;
+    public string? Notes { get; set; }
+    public string? AdminNote { get; set; }
+    public List<OrderStatusHistoryDto> StatusHistory { get; set; } = new();
+}
+
+public class OrderStatusHistoryDto
+{
+    public Guid Id { get; set; }
+    public string? FromStatus { get; set; }
+    public string? ToStatus { get; set; }
+    public string? Note { get; set; }
+    public string? UpdatedByName { get; set; }
+    public string? Source { get; set; }
+    public Guid? ChangedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 
 public class OrderAddressDto
@@ -114,10 +132,12 @@ public class OrderPaymentDto
 public class OrderItemDto
 {
     public Guid ProductId { get; set; }
+    public Guid? VariantId { get; set; }
     public TranslatedTextDto Name { get; set; } = new();
     public string Image { get; set; } = string.Empty;
     public string? Color { get; set; }
     public string? Size { get; set; }
+    public string? Sku { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
@@ -177,5 +197,18 @@ public class PaymentVerificationDto
 public class UpdateOrderStatusDto
 {
     public required string Status { get; set; }
+    public string? Note { get; set; }
+    public string? UpdatedByName { get; set; }
+    public string? Source { get; set; }
+}
+
+// Admin-specific DTOs
+public class BulkDeleteOrdersDto
+{
+    public required List<Guid> Ids { get; set; }
+}
+
+public class UpdateAdminNoteDto
+{
     public string? Note { get; set; }
 }

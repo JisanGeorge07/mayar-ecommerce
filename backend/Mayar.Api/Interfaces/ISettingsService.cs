@@ -22,4 +22,7 @@ public interface ISettingsService
     Task<CheckoutAddressFieldDto> CreateAddressFieldAsync(CreateCheckoutAddressFieldDto dto);
     Task<CheckoutAddressFieldDto?> UpdateAddressFieldAsync(Guid id, UpdateCheckoutAddressFieldDto dto);
     Task<bool> DeleteAddressFieldAsync(Guid id);
+
+    // Page Visibility
+    Task<Dictionary<string, string>> GetPageVisibilityAsync();
 }

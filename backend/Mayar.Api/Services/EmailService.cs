@@ -5,6 +5,7 @@ using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Microsoft.Extensions.Options;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -335,7 +336,7 @@ public class EmailService : IEmailService
                         <td style=""padding: 32px; text-align: center;"">
                             <p style=""margin: 0 0 8px 0; color: #ffffff; font-size: 16px; font-weight: 500;"">Questions about your order?</p>
                             <p style=""margin: 0 0 16px 0; color: #9ca3af; font-size: 14px;"">Contact us at <a href=""mailto:{StoreEmail}"" style=""color: #60a5fa; text-decoration: none;"">{StoreEmail}</a></p>
-                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTime.UtcNow.Year} {StoreName}. All rights reserved.</p>
+                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTimeHelper.GetLocalTime().Year} {StoreName}. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -394,7 +395,7 @@ public class EmailService : IEmailService
                 <table width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""margin-top: 24px;"">
                     <tr>
                         <td style=""text-align: center;"">
-                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTime.UtcNow.Year} {StoreName}. All rights reserved.</p>
+                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTimeHelper.GetLocalTime().Year} {StoreName}. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -449,7 +450,7 @@ public class EmailService : IEmailService
                 <table width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""margin-top: 24px;"">
                     <tr>
                         <td style=""text-align: center;"">
-                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTime.UtcNow.Year} {StoreName}. All rights reserved.</p>
+                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTimeHelper.GetLocalTime().Year} {StoreName}. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -543,7 +544,7 @@ public class EmailService : IEmailService
                 <table width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""margin-top: 24px;"">
                     <tr>
                         <td style=""text-align: center;"">
-                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTime.UtcNow.Year} {StoreName}. All rights reserved.</p>
+                            <p style=""margin: 0; color: #6b7280; font-size: 12px;"">© {DateTimeHelper.GetLocalTime().Year} {StoreName}. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>

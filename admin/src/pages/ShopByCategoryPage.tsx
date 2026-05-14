@@ -19,6 +19,7 @@ export default function ShopByCategoryPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState<ShopByCategoryItem | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => { setItems(await shopByCategoryService.getItems()); };
   useEffect(() => { load(); }, []);
@@ -30,6 +31,7 @@ export default function ShopByCategoryPage() {
   });
 
   const handleSave = async (data: Omit<ShopByCategoryItem, 'id' | 'created_at' | 'updated_at'>, imageFile?: File) => {
+    setSaving(true);
     try {
       console.log('handleSave called with:', { data, imageFile });
 
@@ -73,6 +75,8 @@ export default function ShopByCategoryPage() {
         description: errorMessage,
         variant: 'destructive'
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -186,7 +190,7 @@ export default function ShopByCategoryPage() {
           <DialogHeader>
             <DialogTitle>{editItem ? 'Edit Category Item' : 'Add Category Item'}</DialogTitle>
           </DialogHeader>
-          <ShopByCategoryForm initial={editItem} onSave={handleSave} onCancel={() => { setOpen(false); setEditItem(null); }} />
+          <ShopByCategoryForm initial={editItem} onSave={handleSave} onCancel={() => { setOpen(false); setEditItem(null); }} saving={saving} />
         </DialogContent>
       </Dialog>
     </AdminLayout>

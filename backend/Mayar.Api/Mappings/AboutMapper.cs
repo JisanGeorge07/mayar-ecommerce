@@ -1,7 +1,6 @@
-using System;
-using System.Linq;
 using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Mappings;
 
@@ -95,7 +94,7 @@ public static class AboutMapper
             MetaDescriptionArabic = about.MetaDescriptionArabic,
             // Settings
             Status = about.Status,
-            UpdatedAt = about.UpdatedAt
+            UpdatedAt = DateTime.SpecifyKind(about.UpdatedAt, DateTimeKind.Utc)
         };
     }
 
@@ -132,7 +131,7 @@ public static class AboutMapper
             MetaDescriptionArabic = aboutDto.MetaDescriptionArabic ?? string.Empty,
             // Settings
             Status = aboutDto.Status ?? "draft",
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTimeHelper.GetLocalTime()
         };
 
         return about;

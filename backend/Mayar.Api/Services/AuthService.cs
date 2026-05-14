@@ -3,6 +3,7 @@ using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,6 +16,7 @@ namespace Mayar.Api.Services
         AppDbContext context,
         IConfiguration configuration,
         IEmailService emailService,
+        INotificationService notificationService,
         ILogger<AuthService> logger) : IAuthService
     {
         public async Task<UserResponseDto?> RegisterAsync(UserRegisterDto request)
@@ -39,6 +41,33 @@ namespace Mayar.Api.Services
             await context.SaveChangesAsync();
 
             logger.LogInformation("User registered: {UserId}", user.Id);
+
+            // Send Welcome Notification
+            await notificationService.CreateNotificationAsync(new CreateNotificationDto
+            {
+                UserId = user.Id,
+                TitleEnglish = "Welcome to Mayar!",
+                TitleArabic = "مرحباً في ميار!",
+                MessageEnglish = "Your account has been created successfully. Start shopping now!",
+                MessageArabic = "تم إنشاء حسابك بنجاح. ابدأ التسوق الآن!",
+                Type = "account",
+                Priority = "medium",
+                IsAdminNotification = false
+            });
+
+            // Notify Admin of new customer
+            await notificationService.CreateNotificationAsync(new CreateNotificationDto
+            {
+                TitleEnglish = "New Customer Registered",
+                TitleArabic = "تم تسجيل عميل جديد",
+                MessageEnglish = $"{user.Name} ({user.Email}) has created a new account.",
+                MessageArabic = $"قام {user.Name} ({user.Email}) بإنشاء حساب جديد.",
+                Type = "new_customer",
+                Priority = "low",
+                IsAdminNotification = true,
+                ReferenceType = "User",
+                ReferenceId = user.Id.ToString()
+            });
 
             return new UserResponseDto
             {
@@ -166,7 +195,7 @@ namespace Mayar.Api.Services
 
             var token = Guid.NewGuid().ToString();
             user.PasswordResetToken = token;
-            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+            user.PasswordResetTokenExpiry = DateTimeHelper.GetLocalTime().AddHours(1);
 
             await context.SaveChangesAsync();
 
@@ -178,7 +207,7 @@ namespace Mayar.Api.Services
         {
             var user = await context.Users.FirstOrDefaultAsync(u => 
                 u.PasswordResetToken == request.Token && 
-                u.PasswordResetTokenExpiry > DateTime.UtcNow);
+                u.PasswordResetTokenExpiry > DateTimeHelper.GetLocalTime());
 
             if (user == null)
             {
@@ -231,7 +260,7 @@ namespace Mayar.Api.Services
                 issuer: configuration.GetValue<string>("AppSettings:Issuer"),
                 audience: configuration.GetValue<string>("AppSettings:Audience"),
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
+                expires: DateTimeHelper.GetLocalTime().AddMinutes(15),
                 signingCredentials: creds
             );
 
@@ -250,7 +279,7 @@ namespace Mayar.Api.Services
         {
             var refreshToken = GenerateRefreshToken();
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenExpiryTime = DateTimeHelper.GetLocalTime().AddDays(7);
             await context.SaveChangesAsync();
             return refreshToken;
         }
@@ -262,7 +291,7 @@ namespace Mayar.Api.Services
                 || !CryptographicOperations.FixedTimeEquals(
                     Encoding.UTF8.GetBytes(user.RefreshToken ?? ""),
                     Encoding.UTF8.GetBytes(refreshToken))
-                || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                || user.RefreshTokenExpiryTime <= DateTimeHelper.GetLocalTime())
             {
                 return null;
             }

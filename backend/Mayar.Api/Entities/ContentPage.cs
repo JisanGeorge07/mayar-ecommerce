@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -34,8 +35,8 @@ public class ContentPage
     // Status: "draft" or "published"
     public string Status { get; set; } = "published";
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
+    public DateTime UpdatedAt { get; set; } = DateTimeHelper.GetLocalTime();
     public bool IsActive { get; set; } = true;
 
     // Navigation property

@@ -13,15 +13,18 @@ import type { TopCategory, MiddleCategory, BottomCategory } from '@/types';
 import { topCategoryService } from '@/services/topCategoryService';
 import { middleCategoryService } from '@/services/middleCategoryService';
 import { bottomCategoryService } from '@/services/bottomCategoryService';
+import { productService } from '@/services';
+import type { Product } from '@/types';
 import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 
 interface Props {
   initial: PromoBannerItem | null;
   onSave: (data: Omit<PromoBannerItem, 'id' | 'created_at' | 'updated_at'>, desktopFile?: File, mobileFile?: File) => void;
   onCancel: () => void;
+  saving?: boolean;
 }
 
-export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
+export default function PromoBannerForm({ initial, onSave, onCancel, saving }: Props) {
   const [form, setForm] = useState<Omit<PromoBannerItem, 'id' | 'created_at' | 'updated_at'>>(
     initial ? { ...initial } : { ...INITIAL_PROMO_BANNER }
   );
@@ -35,6 +38,7 @@ export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
   const [categories, setCategories] = useState<TopCategory[]>([]);
   const [subcategories, setSubcategories] = useState<MiddleCategory[]>([]);
   const [productTypes, setProductTypes] = useState<BottomCategory[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
   // Fetch categories from API
@@ -42,14 +46,16 @@ export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
     const fetchCategories = async () => {
       setLoadingCategories(true);
       try {
-        const [topCats, middleCats, bottomCats] = await Promise.all([
+        const [topCats, middleCats, bottomCats, allProducts] = await Promise.all([
           topCategoryService.getAll(),
           middleCategoryService.getAll(),
           bottomCategoryService.getAll(),
+          productService.getProducts(),
         ]);
         setCategories(topCats);
         setSubcategories(middleCats);
         setProductTypes(bottomCats);
+        setProducts(allProducts);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
       } finally {
@@ -109,7 +115,7 @@ export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField label="Internal Name" required>
-                <Input value={form.internal_name} onChange={e => set('internal_name', e.target.value)} placeholder="Summer Collection" />
+                <Input value={form.internal_name} onChange={e => set('internal_name', e.target.value)} />
               </FormField>
               <FormField label="Layout Type" required>
                 <Select value={form.layout_type} onValueChange={v => set('layout_type', v as any)}>
@@ -145,24 +151,24 @@ export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
             <TabsList className="mb-3"><TabsTrigger value="en">English</TabsTrigger><TabsTrigger value="ar">العربية</TabsTrigger></TabsList>
             <TabsContent value="en" className="space-y-4">
               <FormField label="Label / Eyebrow (EN)">
-                <Input value={form.label_en} onChange={e => set('label_en', e.target.value)} placeholder="NEW SEASON" />
+                <Input value={form.label_en} onChange={e => set('label_en', e.target.value)} />
               </FormField>
               <FormField label="Title (EN)" required>
-                <Input value={form.title_en} onChange={e => set('title_en', e.target.value)} placeholder="Summer Collection" />
+                <Input value={form.title_en} onChange={e => set('title_en', e.target.value)} />
               </FormField>
               <FormField label="CTA Button Text (EN)">
-                <Input value={form.cta_text_en} onChange={e => set('cta_text_en', e.target.value)} placeholder="Shop now" />
+                <Input value={form.cta_text_en} onChange={e => set('cta_text_en', e.target.value)} />
               </FormField>
             </TabsContent>
             <TabsContent value="ar" className="space-y-4">
               <FormField label="Label / Eyebrow (AR)">
-                <Input value={form.label_ar} onChange={e => set('label_ar', e.target.value)} placeholder="موسم جديد" dir="rtl" />
+                <Input value={form.label_ar} onChange={e => set('label_ar', e.target.value)} dir="rtl" />
               </FormField>
               <FormField label="Title (AR)">
-                <Input value={form.title_ar} onChange={e => set('title_ar', e.target.value)} placeholder="مجموعة الصيف" dir="rtl" />
+                <Input value={form.title_ar} onChange={e => set('title_ar', e.target.value)} dir="rtl" />
               </FormField>
               <FormField label="CTA Button Text (AR)">
-                <Input value={form.cta_text_ar} onChange={e => set('cta_text_ar', e.target.value)} placeholder="تسوق الآن" dir="rtl" />
+                <Input value={form.cta_text_ar} onChange={e => set('cta_text_ar', e.target.value)} dir="rtl" />
               </FormField>
             </TabsContent>
           </Tabs>
@@ -206,7 +212,7 @@ export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
               </div>
             </div>
             <FormField label="Alt Text">
-              <Input value={form.alt_text} onChange={e => set('alt_text', e.target.value)} placeholder="Descriptive alt text" />
+              <Input value={form.alt_text} onChange={e => set('alt_text', e.target.value)} />
             </FormField>
           </div>
         </FormSection>
@@ -282,9 +288,41 @@ export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
                 )}
               </FormField>
             )}
+            {form.link_type === 'product' && (
+              <div className="space-y-4">
+                <FormField label="Product">
+                  <Select value={form.product_id} onValueChange={v => set('product_id', v)} disabled={loadingCategories}>
+                    <SelectTrigger><SelectValue placeholder={loadingCategories ? 'Loading...' : 'Select product'} /></SelectTrigger>
+                    <SelectContent>
+                      {products.filter(p => p.status === 'active').map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+
+                {form.product_id && (
+                  <div className="flex items-center gap-4 p-3 rounded-lg border bg-muted/30">
+                    {products.find(p => p.id === form.product_id)?.image_url && (
+                      <img
+                        src={products.find(p => p.id === form.product_id)?.image_url}
+                        alt="Product"
+                        className="h-16 w-16 rounded object-cover border"
+                      />
+                    )}
+                    <div>
+                      <h5 className="text-sm font-semibold">{products.find(p => p.id === form.product_id)?.name}</h5>
+                      <p className="text-xs text-muted-foreground">
+                        Base Price: {products.find(p => p.id === form.product_id)?.base_price_kwd} KWD
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {form.link_type === 'custom_url' && (
               <FormField label="Custom URL">
-                <Input value={form.custom_url} onChange={e => set('custom_url', e.target.value)} placeholder="https://..." />
+                <Input value={form.custom_url} onChange={e => set('custom_url', e.target.value)} />
               </FormField>
             )}
           </div>
@@ -337,9 +375,9 @@ export default function PromoBannerForm({ initial, onSave, onCancel }: Props) {
         </FormSection>
 
         <div className="flex gap-3 justify-end pt-2">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(form, desktopFile, mobileFile)}>
-            {initial ? 'Update' : 'Create'}
+          <Button variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
+          <Button onClick={() => onSave(form, desktopFile, mobileFile)} disabled={saving}>
+            {saving ? 'Saving...' : (initial ? 'Update' : 'Create')}
           </Button>
         </div>
       </div>

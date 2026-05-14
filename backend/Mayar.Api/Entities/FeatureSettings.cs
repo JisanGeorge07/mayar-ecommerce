@@ -1,4 +1,5 @@
 using System;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -32,6 +33,6 @@ public class FeatureSettings
     public string? DefaultMetaDescription { get; set; }
 
     // Timestamps
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTimeHelper.GetLocalTime();
+    public DateTime UpdatedAt { get; set; } = DateTimeHelper.GetLocalTime();
 }

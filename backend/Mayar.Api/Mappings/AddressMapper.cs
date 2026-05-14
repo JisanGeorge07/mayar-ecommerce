@@ -1,5 +1,6 @@
 using Mayar.Api.DTOs;
 using Mayar.Api.Entities;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Mappings
 {
@@ -45,8 +46,8 @@ namespace Mayar.Api.Mappings
                 Floor = dto.Floor,
                 FlatOffice = dto.FlatOffice,
                 Notes = dto.Notes,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeHelper.GetLocalTime(),
+                UpdatedAt = DateTimeHelper.GetLocalTime()
             };
         }
 
@@ -65,7 +66,7 @@ namespace Mayar.Api.Mappings
             address.Floor = dto.Floor;
             address.FlatOffice = dto.FlatOffice;
             address.Notes = dto.Notes;
-            address.UpdatedAt = DateTime.UtcNow;
+            address.UpdatedAt = DateTimeHelper.GetLocalTime();
         }
     }
 }

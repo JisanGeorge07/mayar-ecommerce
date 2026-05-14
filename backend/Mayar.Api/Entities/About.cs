@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Entities;
 
@@ -40,7 +41,7 @@ public class About
 
     // Settings
     public string Status { get; set; } = "draft"; // published, draft
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTimeHelper.GetLocalTime();
 
     // Navigation properties
     public ICollection<AboutParagraph> Paragraphs { get; set; } = new List<AboutParagraph>();

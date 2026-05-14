@@ -6,6 +6,7 @@ using Mayar.Api.Entities;
 using Mayar.Api.Interfaces;
 using Mayar.Api.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Mayar.Api.Helpers;
 
 namespace Mayar.Api.Services;
 
@@ -64,7 +65,7 @@ public class ContactService(AppDbContext context) : IContactService
             contact.MetaDescriptionEn = contactDto.MetaDescriptionEn;
             contact.MetaDescriptionAr = contactDto.MetaDescriptionAr;
             contact.Status = contactDto.Status;
-            contact.UpdatedAt = DateTime.UtcNow;
+            contact.UpdatedAt = DateTimeHelper.GetLocalTime();
 
             // Handle contact cards - remove existing and add new ones
             var existingCards = contact.ContactCards.ToList();
@@ -107,8 +108,8 @@ public class ContactService(AppDbContext context) : IContactService
             MetaDescriptionEn = "Get in touch with Mayar. Find our address, phone, email, WhatsApp, and working hours.",
             MetaDescriptionAr = "تواصل مع مايار. اعثر على عنواننا وهاتفنا وبريدنا الإلكتروني وواتساب وساعات العمل.",
             Status = "draft",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.GetLocalTime(),
+            UpdatedAt = DateTimeHelper.GetLocalTime(),
             ContactCards = new List<ContactCard>
             {
                 new()

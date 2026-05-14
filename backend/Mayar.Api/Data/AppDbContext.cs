@@ -55,6 +55,7 @@ namespace Mayar.Api.Data
         public DbSet<CheckoutAddressField> CheckoutAddressFields { get; set; }
 
         public DbSet<TrustBadge> TrustBadges { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

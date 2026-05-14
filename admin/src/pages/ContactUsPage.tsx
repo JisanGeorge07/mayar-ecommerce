@@ -55,12 +55,13 @@ export default function ContactUsPage() {
     setDirty(true);
   }, []);
 
-  const save = async (status: 'draft' | 'published') => {
+  const save = async (forceStatus?: 'draft' | 'published') => {
     if (!data) return;
-    const saved = await contactUsService.saveData({ ...data, status });
+    const finalStatus = forceStatus || data.status;
+    const saved = await contactUsService.saveData({ ...data, status: finalStatus });
     setData(saved);
     setDirty(false);
-    toast.success(status === 'published' ? 'Contact Us page published' : 'Draft saved successfully');
+    toast.success(finalStatus === 'published' ? 'Contact Us page published' : 'Draft saved successfully');
   };
 
   if (!data) return <AdminLayout></AdminLayout>;
@@ -242,7 +243,7 @@ export default function ContactUsPage() {
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => save('draft')}>Save Draft</Button>
-          <Button onClick={() => save('published')}>Publish</Button>
+          <Button onClick={() => save()}>Publish</Button>
         </div>
       </div>
     </AdminLayout>

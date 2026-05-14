@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, Package, Truck, Tag, User, Check } from 'lucide-react';
 import { useLocale } from '@/hooks/useLocale';
-import { loadNotifications, saveNotifications, type NotificationItem } from '@/data/mock/accountData';
+import { notificationService, type NotificationItem } from '@/services/notificationService';
 
 const typeIcons = { order: Package, delivery: Truck, promo: Tag, account: User };
 const typeColors = { order: 'bg-blue-500/10 text-blue-600', delivery: 'bg-green-500/10 text-green-600', promo: 'bg-brand/10 text-brand', account: 'bg-purple-500/10 text-purple-600' };
@@ -9,15 +9,44 @@ const typeColors = { order: 'bg-blue-500/10 text-blue-600', delivery: 'bg-green-
 const AccountNotifications = () => {
   const { lang } = useLocale();
   const t = (en: string, ar: string) => lang === 'ar' ? ar : en;
-  const [notifications, setNotifications] = useState<NotificationItem[]>(loadNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const markAllRead = () => {
-    const updated = notifications.map(n => ({ ...n, read: true }));
-    setNotifications(updated);
-    saveNotifications(updated);
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await notificationService.getUserNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const markAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      const updated = notifications.map(n => ({ ...n, read: true }));
+      setNotifications(updated);
+    } catch (error) {
+      console.error('Failed to mark all read:', error);
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -41,10 +70,10 @@ const AccountNotifications = () => {
       ) : (
         <div className="space-y-3">
           {notifications.map(n => {
-            const Icon = typeIcons[n.type];
+            const Icon = typeIcons[n.type] || Bell;
             return (
               <div key={n.id} className={`bg-card border rounded-xl p-4 flex items-start gap-3 ${n.read ? 'border-border' : 'border-brand/30 bg-brand/5'}`}>
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${typeColors[n.type]}`}>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${typeColors[n.type] || 'bg-muted text-muted-foreground'}`}>
                   <Icon size={16} />
                 </div>
                 <div className="flex-1 min-w-0">

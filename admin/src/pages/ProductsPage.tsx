@@ -39,7 +39,7 @@ export default function ProductsPage() {
     } catch (error) {
       console.error('Failed to load data:', error);
       toast.error('Failed to load products');
-    } 
+    }
     finally {
       setLoading(false);
     }

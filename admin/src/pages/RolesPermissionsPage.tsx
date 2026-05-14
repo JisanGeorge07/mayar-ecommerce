@@ -381,7 +381,7 @@ export default function RolesPermissionsPage() {
       <div className="space-y-6">
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
               <Users className="h-6 w-6 text-primary" /> Roles &amp; Permissions
@@ -389,6 +389,14 @@ export default function RolesPermissionsPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Define role-based access and grant custom menu permissions per user.
             </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={openCreateRole}>
+              <ShieldPlus className="mr-1.5 h-4 w-4" /> Add Role
+            </Button>
+            <Button onClick={openCreateUser} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <UserPlus className="mr-1.5 h-4 w-4" /> Add User
+            </Button>
           </div>
         </div>
 
@@ -406,14 +414,9 @@ export default function RolesPermissionsPage() {
               USERS TAB
           ══════════════════════════════════════════════════════════════════ */}
           <TabsContent value="users" className="mt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Each user inherits their role's access. Grant extra menus individually.
-              </p>
-              <Button onClick={openCreateUser} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <UserPlus className="mr-1.5 h-4 w-4" /> Add User
-              </Button>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Each user inherits their role's access. Grant extra menus individually.
+            </p>
 
             {users.length === 0 && (
               <div className="rounded-xl border border-dashed border-border bg-muted/20 py-16 text-center text-sm text-muted-foreground">
@@ -504,14 +507,9 @@ export default function RolesPermissionsPage() {
               ROLES TAB
           ══════════════════════════════════════════════════════════════════ */}
           <TabsContent value="roles" className="mt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Roles define the default menu access inherited by every assigned user.
-              </p>
-              <Button onClick={openCreateRole} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <ShieldPlus className="mr-1.5 h-4 w-4" /> Add Role
-              </Button>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Roles define the default menu access inherited by every assigned user.
+            </p>
 
             {roles.length === 0 && (
               <div className="rounded-xl border border-dashed border-border bg-muted/20 py-16 text-center text-sm text-muted-foreground">

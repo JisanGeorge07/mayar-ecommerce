@@ -5,7 +5,7 @@ import {
   Search as SearchIcon, Settings, Tag, Bell, User, ChevronLeft,
   ChevronRight, Grid3X3, LogOut, BellRing, Sparkles, CircleDot, LayoutGrid,
   Building2, Shield, MessageCircle, Truck, RefreshCcw, ScrollText, Ticket,
-  ShoppingCart, MenuSquare,
+  ShoppingCart, Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -33,7 +33,6 @@ const NAV_SECTIONS = [
       { title: 'Shop by Category', path: '/shop-by-category', icon: CircleDot },
       { title: 'Promo Banners', path: '/promo-banners', icon: LayoutGrid },
       { title: 'Coupons', path: '/coupons', icon: Ticket },
-      { title: 'Menus', path: '/menus', icon: MenuSquare },
     ],
   },
   {
@@ -50,6 +49,7 @@ const NAV_SECTIONS = [
   {
     label: 'System',
     items: [
+      { title: 'Roles & Permissions', path: '/roles-permissions', icon: Users },
       { title: 'Notifications', path: '/notifications', icon: BellRing },
       { title: 'Settings', path: '/settings', icon: Settings },
     ],

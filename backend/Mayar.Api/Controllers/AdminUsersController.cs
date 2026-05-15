@@ -85,6 +85,11 @@ namespace Mayar.Api.Controllers
             user.Role = role.Name;
             user.RoleId = role.Id;
 
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            }
+
             await context.SaveChangesAsync();
 
             return NoContent();

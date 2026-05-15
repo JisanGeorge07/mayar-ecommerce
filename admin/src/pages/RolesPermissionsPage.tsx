@@ -330,7 +330,7 @@ export default function RolesPermissionsPage() {
       name: userName.trim(),
       email: userEmail.trim(),
       roleId: userRoleDraft,
-      ...(userPassword ? { password: userPassword } : {}),
+      ...(userPassword ? { Password: userPassword } : {}),
     };
 
     if (editingUserId) {

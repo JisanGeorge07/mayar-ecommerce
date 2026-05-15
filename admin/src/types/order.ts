@@ -6,10 +6,10 @@ export type OrderStatus =
   | 'out_for_delivery'
   | 'delivered'
   | 'cancelled'
-  | 'return_requested'
   | 'returned'
-  | 'refund_requested'
-  | 'refunded';
+  | 'refunded'
+  | 'refundedrequested'
+  | 'returnedrequested';
 
 export type PaymentMethod = 'credit_card' | 'myfatoorah' | 'apple_pay' | 'google_pay' | 'cash_on_delivery';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
@@ -82,10 +82,10 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   out_for_delivery: 'Out for Delivery',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
-  return_requested: 'Return Requested',
   returned: 'Returned',
-  refund_requested: 'Refund Requested',
   refunded: 'Refunded',
+  refundedrequested: 'Refund Requested',
+  returnedrequested: 'Return Requested',
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {

@@ -31,11 +31,24 @@ const QuickAddPopup = ({ product, open, onOpenChange, mode = 'cart' }: QuickAddP
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
 
+  const needsSize = product.sizes.length > 0;
+  const isVariantFullySelected = (!needsSize || !!selectedSize) && !!selectedColor;
+
   const currentVariant = useMemo(() => {
-    return product.variants.find(v =>
+    const variant = product.variants.find(v =>
       v.colorId === selectedColor && (!selectedSize || v.sizeId === selectedSize)
-    ) || product.variants[0];
+    );
+    // If not fully selected yet, return the first variant of the color for display purposes,
+    // but we won't use it for the stock alert logic.
+    return variant || product.variants.find(v => v.colorId === selectedColor) || product.variants[0];
   }, [product.variants, selectedColor, selectedSize]);
+
+  // Find the exact variant for stock checking
+  const exactVariant = useMemo(() => {
+    return product.variants.find(v =>
+      v.colorId === selectedColor && (!needsSize || v.sizeId === selectedSize)
+    );
+  }, [product.variants, selectedColor, selectedSize, needsSize]);
 
   const variantImage = useMemo(() => {
     if (currentVariant?.imageUrl) {
@@ -57,8 +70,9 @@ const QuickAddPopup = ({ product, open, onOpenChange, mode = 'cart' }: QuickAddP
     currentVariant?.compareAtPriceKWD ?? product.compareAtPriceKWD,
     currentVariant?.compareAtPriceINR ?? product.compareAtPriceINR
   );
-  const stock = currentVariant?.stockQuantity ?? 99;
-  const isLowStock = stock > 0 && stock <= 5;
+  
+  const stock = exactVariant?.stockQuantity ?? (needsSize && !selectedSize ? 99 : 0);
+  const isLowStock = isVariantFullySelected && stock > 0 && stock <= 5;
 
   const availableSizeIds = useMemo(() => {
     if (!selectedColor) return new Set(product.sizes.map(s => s.id));
@@ -70,7 +84,6 @@ const QuickAddPopup = ({ product, open, onOpenChange, mode = 'cart' }: QuickAddP
     );
   }, [product.variants, selectedColor, product.sizes]);
 
-  const needsSize = product.sizes.length > 0;
   const canAdd = (!needsSize || selectedSize) && stock > 0;
 
   const handleConfirm = () => {

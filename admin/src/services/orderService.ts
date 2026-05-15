@@ -90,6 +90,10 @@ const BACKEND_STATUS_MAP: Record<string, OrderStatus> = {
   outfordelivery: 'out_for_delivery',
   delivered: 'delivered',
   cancelled: 'cancelled',
+  refunded: 'refunded',
+  returned: 'returned',
+  refundedrequested: 'refundedrequested',
+  returnedrequested: 'returnedrequested',
 };
 
 export const FRONTEND_TO_BACKEND_STATUS: Record<OrderStatus, string> = {
@@ -100,10 +104,10 @@ export const FRONTEND_TO_BACKEND_STATUS: Record<OrderStatus, string> = {
   out_for_delivery: 'OutForDelivery',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
-  return_requested: 'Cancelled',
-  returned: 'Cancelled',
-  refund_requested: 'Cancelled',
-  refunded: 'Cancelled',
+  returned: 'Returned',
+  refunded: 'Refunded',
+  refundedrequested: 'RefundedRequested',
+  returnedrequested: 'ReturnedRequested',
 };
 
 function mapBackendStatus(backendStatus: string): OrderStatus {

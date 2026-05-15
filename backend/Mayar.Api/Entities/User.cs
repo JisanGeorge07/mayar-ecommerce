@@ -30,5 +30,8 @@ namespace Mayar.Api.Entities
         public DateTime? PasswordResetTokenExpiry { get; set; }
 
         public string Role { get; set; } = "User";
+
+        public Guid? RoleId { get; set; }
+        public Role? RoleEntity { get; set; }
     }
 }

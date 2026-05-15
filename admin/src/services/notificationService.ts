@@ -25,6 +25,9 @@ export interface Notification {
   referenceId?: string;
   isAdminNotification: boolean;
   status: NotificationStatus;
+  isConfirmed: boolean;
+  confirmedBy?: string;
+  confirmedAt?: string;
 }
 
 export const notificationService = {

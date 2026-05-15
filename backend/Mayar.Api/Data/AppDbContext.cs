@@ -7,6 +7,8 @@ namespace Mayar.Api.Data
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
         public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<HeroSlide> HeroSlides { get; set; }
 
         public DbSet<TopCategory> TopCategories { get; set; }
@@ -266,20 +268,58 @@ namespace Mayar.Api.Data
                 .HasForeignKey(f => f.CountryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Configure Role relationships
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Role)
+                .WithMany(r => r.Permissions)
+                .HasForeignKey(rp => rp.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.RoleEntity)
+                .WithMany()
+                .HasForeignKey(u => u.RoleId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // Unique index for country code
             modelBuilder.Entity<CheckoutCountry>()
                 .HasIndex(c => c.CountryCode)
                 .IsUnique();
 
+            var adminRoleId = Guid.NewGuid();
+            var userRoleId = Guid.NewGuid();
+
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = adminRoleId, Name = "Admin", Description = "Full access to all sections of the admin panel." },
+                new Role { Id = userRoleId, Name = "User", Description = "Default role for customers." }
+            );
+
+            // Give Admin all permissions (this is just for seeding, can be managed via UI)
+            var paths = new[] { 
+                "/dashboard", "/categories", "/subcategories", "/product-types", "/products", "/orders",
+                "/hero-banners", "/shop-by-category", "/promo-banners", "/coupons",
+                "/pages/about-us", "/pages/privacy-policy", "/pages/contact-us", "/pages/shipping-information", "/pages/returns-exchange", "/pages/terms-conditions",
+                "/notifications", "/roles-permissions", "/settings"
+            };
+
+            var rolePermissions = paths.Select((path, index) => new RolePermission
+            {
+                Id = index + 1,
+                RoleId = adminRoleId,
+                Path = path
+            }).ToArray();
+
+            modelBuilder.Entity<RolePermission>().HasData(rolePermissions);
+
             modelBuilder.Entity<User>().HasData(
                 new User
-
                 {
                     Id = Guid.NewGuid(),
                     Name = "Admin",
                     Email = "admin@mayar.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                     Role = "Admin",
+                    RoleId = adminRoleId
                 }
             );
 

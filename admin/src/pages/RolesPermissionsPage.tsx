@@ -25,6 +25,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { rolesService, type Role } from '@/services/rolesService';
+import { adminUserService } from '@/services/adminUserService';
+import type { AdminUser } from '@/types/auth';
+import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 // ─── Menu tree (mirrors AdminLayout NAV_SECTIONS exactly) ─────────────────────
 
@@ -63,6 +68,7 @@ const MENU_SECTIONS = [
   {
     section: 'System',
     items: [
+      { path: '/roles-permissions', title: 'Roles & Permissions', icon: Users },
       { path: '/notifications', title: 'Notifications', icon: BellRing },
       { path: '/settings',      title: 'Settings',      icon: Settings },
     ],
@@ -73,44 +79,9 @@ const ALL_PATHS = MENU_SECTIONS.flatMap(s => s.items.map(i => i.path));
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  allowedPaths: string[];
-}
+// (Using types imported from services/types)
 
-interface AppUser {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  roleId: string;
-  customPaths: string[];
-}
-
-// ─── Sample data ──────────────────────────────────────────────────────────────
-
-const INITIAL_ROLES: Role[] = [
-  {
-    id: 'admin',
-    name: 'Admin',
-    description: 'Full access to all sections of the admin panel.',
-    allowedPaths: ALL_PATHS,
-  },
-  {
-    id: 'sales',
-    name: 'Sales',
-    description: 'Access limited to the Dashboard only by default.',
-    allowedPaths: ['/dashboard'],
-  },
-];
-
-const INITIAL_USERS: AppUser[] = [
-  { id: 'u1', name: 'Anessh', email: 'anessh@mayarshop.com', avatar: 'AN', roleId: 'admin', customPaths: [] },
-  { id: 'u2', name: 'Jisan',  email: 'jisan@mayarshop.com',  avatar: 'JI', roleId: 'sales', customPaths: [] },
-  { id: 'u3', name: 'Shahul', email: 'shahul@mayarshop.com', avatar: 'SH', roleId: 'sales', customPaths: ['/orders', '/products'] },
-];
+// (Removed mock data)
 
 // ─── Style helpers ────────────────────────────────────────────────────────────
 
@@ -138,10 +109,8 @@ function initials(name: string) {
   return name.trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0, 2).join('');
 }
 
-function getEffectivePaths(user: AppUser, roles: Role[]): string[] {
-  const role = roles.find(r => r.id === user.roleId);
-  const base = role?.allowedPaths ?? [];
-  return Array.from(new Set([...base, ...user.customPaths]));
+function getEffectivePaths(user: AdminUser, roles: Role[]): string[] {
+  return user.allowedPaths;
 }
 
 // ─── MenuCheckGrid ────────────────────────────────────────────────────────────
@@ -234,8 +203,9 @@ function MenuCheckGrid({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function RolesPermissionsPage() {
-  const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
-  const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // ── Role sheet (create + edit) ────────────────────────────────────────────
   const [roleSheet, setRoleSheet] = useState(false);
@@ -250,9 +220,29 @@ export default function RolesPermissionsPage() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('');
   const [userRoleDraft, setUserRoleDraft] = useState('');
-  const [customDraft, setCustomDraft] = useState<string[]>([]);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [r, u] = await Promise.all([
+        rolesService.getRoles(),
+        adminUserService.getAdminUsers(),
+      ]);
+      setRoles(r);
+      setUsers(u);
+    } catch (error) {
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ── Role actions ──────────────────────────────────────────────────────────
 
@@ -272,32 +262,41 @@ export default function RolesPermissionsPage() {
     setRoleSheet(true);
   };
 
-  const saveRole = () => {
+  const saveRole = async () => {
     if (!roleName.trim()) { toast.error('Role name is required'); return; }
+    
+    const payload = {
+      name: roleName.trim(),
+      description: roleDesc.trim(),
+      allowedPaths: roleDraft,
+    };
+
     if (editingRoleId) {
-      setRoles(prev => prev.map(r =>
-        r.id === editingRoleId ? { ...r, name: roleName.trim(), description: roleDesc.trim(), allowedPaths: roleDraft } : r
-      ));
-      toast.success(`"${roleName}" role updated`);
+      const success = await rolesService.updateRole(editingRoleId, payload);
+      if (success) {
+        toast.success(`"${roleName}" role updated`);
+        fetchData();
+        setRoleSheet(false);
+      }
     } else {
-      const newId = roleName.trim().toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
-      setRoles(prev => [...prev, { id: newId, name: roleName.trim(), description: roleDesc.trim(), allowedPaths: roleDraft }]);
-      toast.success(`"${roleName}" role created`);
+      const newRole = await rolesService.createRole(payload);
+      if (newRole) {
+        toast.success(`"${roleName}" role created`);
+        fetchData();
+        setRoleSheet(false);
+      }
     }
-    setRoleSheet(false);
   };
 
-  const confirmDeleteRole = () => {
+  const confirmDeleteRole = async () => {
     if (!deleteRoleId) return;
-    const role = roles.find(r => r.id === deleteRoleId);
-    const affected = users.filter(u => u.roleId === deleteRoleId).length;
-    if (affected > 0) {
-      toast.error(`Cannot delete — ${affected} user${affected > 1 ? 's are' : ' is'} assigned to "${role?.name}"`);
-      setDeleteRoleId(null);
-      return;
+    const res = await rolesService.deleteRole(deleteRoleId);
+    if (res.success) {
+      toast.success('Role deleted');
+      fetchData();
+    } else {
+      toast.error(res.message || 'Failed to delete role');
     }
-    setRoles(prev => prev.filter(r => r.id !== deleteRoleId));
-    toast.success(`"${role?.name}" role deleted`);
     setDeleteRoleId(null);
   };
 
@@ -307,74 +306,75 @@ export default function RolesPermissionsPage() {
     setEditingUserId(null);
     setUserName('');
     setUserEmail('');
+    setUserPassword('');
     setUserRoleDraft(roles[0]?.id ?? '');
-    setCustomDraft([]);
     setUserSheet(true);
   };
 
-  const openEditUser = (user: AppUser) => {
+  const openEditUser = (user: AdminUser) => {
     setEditingUserId(user.id);
     setUserName(user.name);
     setUserEmail(user.email);
-    setUserRoleDraft(user.roleId);
-    setCustomDraft([...user.customPaths]);
+    setUserPassword(''); // Don't show password
+    setUserRoleDraft(user.roleId || '');
     setUserSheet(true);
   };
 
-  const saveUser = () => {
+  const saveUser = async () => {
     if (!userName.trim()) { toast.error('Name is required'); return; }
     if (!userEmail.trim()) { toast.error('Email is required'); return; }
     if (!userRoleDraft) { toast.error('Select a role'); return; }
+    if (!editingUserId && !userPassword.trim()) { toast.error('Password is required for new users'); return; }
 
-    const rolePathsNow = roles.find(r => r.id === userRoleDraft)?.allowedPaths ?? [];
-    const cleanCustom = customDraft.filter(p => !rolePathsNow.includes(p));
+    const payload = {
+      name: userName.trim(),
+      email: userEmail.trim(),
+      roleId: userRoleDraft,
+      ...(userPassword ? { password: userPassword } : {}),
+    };
 
     if (editingUserId) {
-      setUsers(prev => prev.map(u =>
-        u.id === editingUserId
-          ? { ...u, name: userName.trim(), email: userEmail.trim(), roleId: userRoleDraft, customPaths: cleanCustom, avatar: initials(userName) }
-          : u
-      ));
-      toast.success(`${userName} updated`);
+      const success = await adminUserService.updateAdminUser(editingUserId, payload);
+      if (success) {
+        toast.success(`${userName} updated`);
+        fetchData();
+        setUserSheet(false);
+      }
     } else {
-      const newId = 'u_' + Date.now();
-      setUsers(prev => [...prev, {
-        id: newId,
-        name: userName.trim(),
-        email: userEmail.trim(),
-        avatar: initials(userName),
-        roleId: userRoleDraft,
-        customPaths: cleanCustom,
-      }]);
-      toast.success(`${userName} added`);
+      const newUser = await adminUserService.createAdminUser(payload);
+      if (newUser) {
+        toast.success(`${userName} added`);
+        fetchData();
+        setUserSheet(false);
+      }
     }
-    setUserSheet(false);
   };
 
-  const confirmDeleteUser = () => {
+  const confirmDeleteUser = async () => {
     if (!deleteUserId) return;
-    const user = users.find(u => u.id === deleteUserId);
-    setUsers(prev => prev.filter(u => u.id !== deleteUserId));
-    toast.success(`${user?.name} removed`);
+    const success = await adminUserService.deleteAdminUser(deleteUserId);
+    if (success) {
+      toast.success('User removed');
+      fetchData();
+    }
     setDeleteUserId(null);
-  };
-
-  // ── Derived for user sheet ────────────────────────────────────────────────
-
-  const rolePathsForDraft = roles.find(r => r.id === userRoleDraft)?.allowedPaths ?? [];
-  const extraPaths = customDraft.filter(p => !rolePathsForDraft.includes(p));
-  const effectiveForDraft = Array.from(new Set([...rolePathsForDraft, ...customDraft]));
-
-  const toggleCustomPath = (path: string) => {
-    if (rolePathsForDraft.includes(path)) return;
-    setCustomDraft(prev => prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]);
   };
 
   const handleRoleChangeInUserSheet = (newRoleId: string) => {
     setUserRoleDraft(newRoleId);
-    const newRolePaths = roles.find(r => r.id === newRoleId)?.allowedPaths ?? [];
-    setCustomDraft(prev => prev.filter(p => !newRolePaths.includes(p)));
   };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const rolePathsForDraft = roles.find(r => r.id === userRoleDraft)?.allowedPaths ?? [];
 
   return (
     <AdminLayout>
@@ -437,7 +437,7 @@ export default function RolesPermissionsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className={cn('flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white shrink-0', AVATAR_COLORS[idx % AVATAR_COLORS.length])}>
-                          {user.avatar}
+                          {initials(user.name)}
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground truncate">{user.name}</p>
@@ -460,11 +460,6 @@ export default function RolesPermissionsPage() {
                         <RoleIcon className="h-3.5 w-3.5" />
                         {role?.name ?? 'Unknown Role'}
                       </span>
-                      {user.customPaths.length > 0 && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-                          +{user.customPaths.length} custom
-                        </span>
-                      )}
                     </div>
 
                     {/* Accessible menus */}
@@ -475,26 +470,21 @@ export default function RolesPermissionsPage() {
                       <div className="space-y-1 max-h-44 overflow-y-auto pr-1">
                         {MENU_SECTIONS.flatMap(sec => sec.items).map(item => {
                           const Icon = item.icon;
-                          const hasAccess = effective.includes(item.path);
-                          const isCustom = user.customPaths.includes(item.path) && !role?.allowedPaths.includes(item.path);
+                          const hasAccess = user.allowedPaths?.includes(item.path);
                           if (!hasAccess) return null;
                           return (
-                            <div key={item.path} className={cn(
-                              'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs',
-                              isCustom ? 'bg-amber-50 border border-amber-200' : 'bg-muted/40'
-                            )}>
+                            <div key={item.path} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs bg-muted/40">
                               <Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
                               <span className="font-medium text-foreground">{item.title}</span>
-                              {isCustom && <span className="ml-auto text-amber-600 font-semibold">Custom</span>}
                             </div>
                           );
                         })}
                       </div>
                     </div>
 
-                    {effective.length < ALL_PATHS.length && (
+                    {(user.allowedPaths?.length ?? 0) < ALL_PATHS.length && (
                       <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
-                        {ALL_PATHS.length - effective.length} section{ALL_PATHS.length - effective.length !== 1 ? 's' : ''} restricted
+                        {ALL_PATHS.length - (user.allowedPaths?.length ?? 0)} section{ALL_PATHS.length - (user.allowedPaths?.length ?? 0) !== 1 ? 's' : ''} restricted
                       </p>
                     )}
                   </div>
@@ -557,12 +547,12 @@ export default function RolesPermissionsPage() {
                           title={u.name}
                           className={cn('flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-white', AVATAR_COLORS[users.indexOf(u) % AVATAR_COLORS.length])}
                         >
-                          {u.avatar}
+                          {initials(u.name)}
                         </div>
                       ))}
                       {usersInRole.length === 0 && <span className="text-xs text-muted-foreground italic">No users assigned</span>}
                       <span className="ml-auto text-xs text-muted-foreground">{role.allowedPaths.length}/{ALL_PATHS.length} menus</span>
-                    </div>
+                    </div> 
 
                     {/* Menu checklist (read-only view) */}
                     <div className="px-5 py-4">
@@ -584,7 +574,7 @@ export default function RolesPermissionsPage() {
           <SheetHeader>
             <SheetTitle>{editingRoleId ? 'Edit Role' : 'Create Role'}</SheetTitle>
             <SheetDescription>
-              {editingRoleId ? 'Update this role's name, description, and menu access.' : 'Define a new role and select which menus it can access.'}
+              {editingRoleId ? 'Update this role s name, description, and menu access.' : 'Define a new role and select which menus it can access.'}
             </SheetDescription>
           </SheetHeader>
 
@@ -666,6 +656,19 @@ export default function RolesPermissionsPage() {
               </div>
             </div>
 
+            {/* Password */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide">
+                {editingUserId ? 'New Password (Optional)' : 'Password *'}
+              </Label>
+              <Input
+                type="password"
+                value={userPassword}
+                onChange={e => setUserPassword(e.target.value)}
+                placeholder={editingUserId ? 'Leave blank to keep current' : 'Enter password'}
+              />
+            </div>
+
             {/* Role selector */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wide">Role *</Label>
@@ -709,69 +712,17 @@ export default function RolesPermissionsPage() {
               </div>
             )}
 
-            {/* Custom extra access */}
-            {userRoleDraft && rolePathsForDraft.length < ALL_PATHS.length && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold uppercase tracking-wide">Custom Additional Access</Label>
-                  {extraPaths.length > 0 && (
-                    <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-                      +{extraPaths.length} extra
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Grant individual menus beyond this user's role. Highlighted in amber.
-                </p>
-                <div className="rounded-lg border border-border bg-muted/20 px-4 py-4 space-y-5">
-                  {MENU_SECTIONS.map(sec => {
-                    const extraInSec = sec.items.filter(i => !rolePathsForDraft.includes(i.path));
-                    if (extraInSec.length === 0) return null;
-                    return (
-                      <div key={sec.section}>
-                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{sec.section}</p>
-                        <div className="ml-2 grid gap-1.5">
-                          {extraInSec.map(item => {
-                            const Icon = item.icon;
-                            const granted = customDraft.includes(item.path);
-                            return (
-                              <label key={item.path} className={cn(
-                                'flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-colors',
-                                granted ? 'border-amber-300 bg-amber-50' : 'border-border bg-background hover:bg-muted/40'
-                              )}>
-                                <Checkbox checked={granted} onCheckedChange={() => toggleCustomPath(item.path)} />
-                                <Icon className={cn('h-4 w-4 shrink-0', granted ? 'text-amber-600' : 'text-muted-foreground')} />
-                                <span className={cn('text-sm font-medium', granted ? 'text-foreground' : 'text-muted-foreground')}>
-                                  {item.title}
-                                </span>
-                                {granted && <span className="ml-auto text-[10px] font-semibold text-amber-600">Custom</span>}
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Effective access summary */}
             {userRoleDraft && (
               <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 space-y-2">
                 <p className="text-xs font-semibold text-primary">
-                  Effective Access — {effectiveForDraft.length}/{ALL_PATHS.length} menus
+                  Effective Access — {roles.find(r => r.id === userRoleDraft)?.allowedPaths.length || 0}/{ALL_PATHS.length} menus
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {MENU_SECTIONS.flatMap(s => s.items).map(item => {
-                    const has = effectiveForDraft.includes(item.path);
+                    const has = roles.find(r => r.id === userRoleDraft)?.allowedPaths.includes(item.path);
                     if (!has) return null;
-                    const isCustom = customDraft.includes(item.path) && !rolePathsForDraft.includes(item.path);
                     return (
-                      <span key={item.path} className={cn(
-                        'rounded-full border px-2 py-0.5 text-[11px] font-medium',
-                        isCustom ? 'border-amber-300 bg-amber-100 text-amber-700' : 'border-border bg-muted text-foreground'
-                      )}>
+                      <span key={item.path} className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
                         {item.title}
                       </span>
                     );

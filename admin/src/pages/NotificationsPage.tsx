@@ -12,6 +12,8 @@ const TYPES: NotificationType[] = [
 const PRIORITIES: NotificationPriority[] = ['low', 'medium', 'high', 'critical'];
 const typeLabel = (t: string) => t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
+import { toast } from 'sonner';
+
 export default function NotificationsPage() {
   const { notifications, markAsRead, markAllAsRead, confirmNotification, deleteNotification } = useNotifications();
   const [filterType, setFilterType] = useState('');
@@ -32,8 +34,22 @@ export default function NotificationsPage() {
     setViewNotif(n);
   };
 
-  const handleConfirm = (id: string) => {
-    confirmNotification(id);
+  const handleConfirm = async (id: string) => {
+    try {
+      await confirmNotification(id);
+      toast.success('Notification confirmed');
+    } catch {
+      toast.error('Failed to confirm notification');
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      toast.success('All notifications marked as read');
+    } catch {
+      toast.error('Failed to mark all as read');
+    }
   };
 
   return (
@@ -44,7 +60,7 @@ export default function NotificationsPage() {
             <h2 className="font-display text-2xl font-bold text-foreground">Notifications</h2>
             <p className="text-sm text-muted-foreground mt-1">Review and confirm CMS notifications</p>
           </div>
-          <button onClick={markAllAsRead} className="flex items-center gap-1.5 rounded-md border border-input px-3 py-2 text-sm hover:bg-muted transition-colors">
+          <button onClick={handleMarkAllAsRead} className="flex items-center gap-1.5 rounded-md border border-input px-3 py-2 text-sm hover:bg-muted transition-colors">
             <CheckCheck className="h-4 w-4" /> Mark All Read
           </button>
         </div>
@@ -196,7 +212,7 @@ export default function NotificationsPage() {
 
               <div className="mt-6 flex justify-end gap-2">
                 {!viewNotif.isConfirmed && (
-                  <button onClick={() => { handleConfirm(viewNotif.id); setViewNotif({ ...viewNotif, isConfirmed: true, confirmedAt: new Date().toISOString() } as any); }}
+                  <button onClick={() => { handleConfirm(viewNotif.id); setViewNotif({ ...viewNotif, isConfirmed: true, confirmedAt: new Date().toISOString(), confirmedBy: 'Admin' } as any); }}
                     className="flex items-center gap-1.5 rounded-md bg-success px-4 py-2 text-sm font-semibold text-success-foreground hover:bg-success/90 transition-colors">
                     <CheckCircle2 className="h-4 w-4" /> Confirm
                   </button>

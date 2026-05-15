@@ -26,7 +26,10 @@ namespace Mayar.Api.Mappings
                 ReferenceType = entity.ReferenceType,
                 ReferenceId = entity.ReferenceId,
                 IsAdminNotification = entity.IsAdminNotification,
-                Status = entity.Status
+                Status = entity.Status,
+                IsConfirmed = entity.IsConfirmed,
+                ConfirmedBy = entity.ConfirmedBy,
+                ConfirmedAt = entity.ConfirmedAt
             };
         }
 

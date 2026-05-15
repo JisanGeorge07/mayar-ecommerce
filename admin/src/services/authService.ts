@@ -44,7 +44,10 @@ export const authService = {
         "/auth/checkAuth"
       );
 
-      if (res.data.user.role !== "Admin") {
+      // Allow access if user has at least one allowed path
+      const hasPermissions = res.data.user.allowedPaths && res.data.user.allowedPaths.length > 0;
+      
+      if (!hasPermissions) {
         this.logout();
         return null;
       }

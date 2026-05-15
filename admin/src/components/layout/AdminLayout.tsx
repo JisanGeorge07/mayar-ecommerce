@@ -117,8 +117,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const recentNotifs = publishedNotifs.slice(0, 8);
 
   const timeAgo = (iso: string) => {
-    const diff = Date.now() - new Date(iso).getTime();
+    // Append +03:00 if the timestamp doesn't have a timezone to ensure it's treated as Kuwait time
+    const dateStr = (iso.includes('Z') || iso.includes('+')) ? iso : `${iso}+03:00`;
+    const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
+    if (mins < 0) return 'Just now'; // Handle slight clock drifts
     if (mins < 60) return `${mins}m ago`;
     const hrs = Math.floor(mins / 60);
     if (hrs < 24) return `${hrs}h ago`;
@@ -140,34 +143,42 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin">
-          {NAV_SECTIONS.map(section => (
-            <div key={section.label} className="mb-4">
-              {!collapsed && (
-                <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
-                  {section.label}
-                </p>
-              )}
-              {section.items.map(item => {
-                const active = location.pathname.startsWith(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    title={collapsed ? item.title : undefined}
-                    className={cn(
-                      'mx-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                      active
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                        : 'text-secondary-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                    )}
-                  >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>{item.title}</span>}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+          {NAV_SECTIONS.map(section => {
+            const visibleItems = section.items.filter(item => 
+              user?.allowedPaths?.includes(item.path)
+            );
+
+            if (visibleItems.length === 0) return null;
+
+            return (
+              <div key={section.label} className="mb-4">
+                {!collapsed && (
+                  <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">
+                    {section.label}
+                  </p>
+                )}
+                {visibleItems.map(item => {
+                  const active = location.pathname.startsWith(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      title={collapsed ? item.title : undefined}
+                      className={cn(
+                        'mx-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                        active
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                          : 'text-secondary-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
 
         <button
@@ -219,16 +230,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               )}
             </div>
 
-            <div ref={notifRef} className="relative">
-              <button onClick={() => { setShowNotifs(v => !v); setShowProfile(false); }}
-                className="relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted transition-colors">
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+            {user?.allowedPaths?.includes('/notifications') && (
+              <div ref={notifRef} className="relative">
+                <button onClick={() => { setShowNotifs(v => !v); setShowProfile(false); }}
+                  className="relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted transition-colors">
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
               {showNotifs && (
                 <div className="absolute right-0 top-full mt-1 z-50 w-80 rounded-lg border border-border bg-card shadow-xl">
                   <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -257,6 +269,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
               )}
             </div>
+          )}
 
             <div ref={profileRef} className="relative">
               <button onClick={() => { setShowProfile(v => !v); setShowNotifs(false); }}

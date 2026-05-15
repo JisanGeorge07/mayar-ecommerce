@@ -12,4 +12,9 @@ public enum OrderStatus
     OutForDelivery = 7,
     Delivered = 8,
     Cancelled = 9,
+    Refunded = 10,
+    Returned = 11,
+    RefundedRequested = 12,
+    ReturnedRequested = 13
 }
+ 

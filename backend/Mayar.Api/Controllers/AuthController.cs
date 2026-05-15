@@ -67,17 +67,7 @@ namespace Mayar.Api.Controllers
             return Ok(new
             {
                 success = true,
-                user = new
-                {
-                    id = userId,
-                    name = username,
-                    email = user?.Email,
-                    role = user?.Role,
-                    phoneNumber = user?.PhoneNumber,
-                    address = user?.Address,
-                    country = user?.Country,
-                    pinCode = user?.PinCode,
-                }
+                user = user
             });
         }
 

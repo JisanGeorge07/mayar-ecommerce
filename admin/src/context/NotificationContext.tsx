@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { notificationService, type Notification } from '@/services/notificationService';
+import { notificationService, type Notification, type NotificationType, type NotificationPriority } from '@/services/notificationService';
+export type { Notification, NotificationType, NotificationPriority };
 import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
@@ -68,12 +69,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const confirmNotification = useCallback(async (id: string) => {
     try {
       await notificationService.confirmNotification(id);
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isConfirmed: true, isRead: true, confirmedAt: new Date().toISOString() } : n));
+      setNotifications(prev => prev.map(n => n.id === id ? { 
+        ...n, 
+        isConfirmed: true, 
+        isRead: true, 
+        confirmedBy: user?.name || 'Admin',
+        confirmedAt: new Date().toISOString() 
+      } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Failed to confirm notification:', error);
     }
-  }, []);
+  }, [user]);
 
   const deleteNotification = useCallback(async (id: string) => {
     try {

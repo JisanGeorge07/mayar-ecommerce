@@ -57,10 +57,10 @@ const statusColor: Record<OrderStatus, string> = {
   out_for_delivery: 'bg-orange-100 text-orange-800 border-orange-200',
   delivered: 'bg-green-100 text-green-800 border-green-200',
   cancelled: 'bg-red-100 text-red-800 border-red-200',
-  return_requested: 'bg-orange-100 text-orange-800 border-orange-200',
   returned: 'bg-gray-100 text-gray-700 border-gray-200',
-  refund_requested: 'bg-rose-100 text-rose-800 border-rose-200',
   refunded: 'bg-purple-100 text-purple-800 border-purple-200',
+  refundedrequested: 'bg-rose-100 text-rose-800 border-rose-200',
+  returnedrequested: 'bg-orange-100 text-orange-800 border-orange-200',
 };
 
 const paymentStatusColor: Record<PaymentStatus, string> = {
@@ -72,7 +72,7 @@ const paymentStatusColor: Record<PaymentStatus, string> = {
 
 const ALL_STATUSES: OrderStatus[] = [
   'pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery',
-  'delivered', 'cancelled', 'return_requested', 'returned', 'refund_requested', 'refunded',
+  'delivered', 'cancelled', 'returnedrequested', 'returned', 'refundedrequested', 'refunded',
 ];
 
 const PAGE_SIZES = [10, 25, 50, 100];
@@ -217,7 +217,7 @@ function parseImportCSV(text: string): CreateOrderPayload[] {
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
     if (cols.length < 15 || !cols[0]) continue;
-    
+
     // Mapping:
     // 0: First Name, 1: Last Name, 2: Email, 3: Phone
     // 4: Area, 5: Block, 6: Street, 7: Building, 8: Floor, 9: Flat/Office, 10: Address Notes
@@ -254,7 +254,7 @@ function parseImportCSV(text: string): CreateOrderPayload[] {
         productId: '', // Admin creation endpoint usually handles lookup by name or needs valid ID
         variantId: undefined,
         nameEn: cols[12] ? `${cols[11]} (${cols[12]})` : cols[11],
-        nameAr: cols[12] ? `${cols[11]} (${cols[12]})` : cols[11], 
+        nameAr: cols[12] ? `${cols[11]} (${cols[12]})` : cols[11],
         image: 'https://placehold.co/60x60/888/white?text=Item',
         quantity: qty,
         unitPrice,
@@ -308,7 +308,11 @@ function QuickStatus({ order, onUpdated }: { order: Order; onUpdated: (o: Order)
       });
       onUpdated(u);
       toast.success(`${order.orderNumber} → ${ORDER_STATUS_LABELS[v as OrderStatus]}`);
-    } catch { toast.error('Failed'); }
+    } catch (err: any) {
+      console.error(err);
+      const msg = err.response?.data?.message || 'Failed to update status';
+      toast.error(msg);
+    }
     finally { setBusy(false); }
   };
   return (
@@ -361,6 +365,19 @@ function AddOrderDialog({ open, onClose, onCreated }: {
     status: 'pending' as OrderStatus, customerNote: '',
   });
   const [items, setItems] = useState<NewItem[]>([emptyItem()]);
+
+  const resetForm = () => {
+    setF({
+      firstName: '', lastName: '', email: '', phone: '',
+      area: '', block: '', street: '', building: '',
+      floor: '', flatOffice: '', addressNotes: '',
+      paymentMethod: 'cash_on_delivery',
+      paymentStatus: 'pending',
+      shippingFee: '0.000', discount: '0.000', couponCode: '',
+      status: 'pending', customerNote: '',
+    });
+    setItems([emptyItem()]);
+  };
 
   useEffect(() => {
     if (open) {
@@ -480,6 +497,7 @@ function AddOrderDialog({ open, onClose, onCreated }: {
       const order = await createOrder(payload);
       onCreated(order);
       toast.success(`Order created successfully`);
+      resetForm();
       onClose();
     } catch (err: any) {
       console.error(err);
@@ -588,7 +606,7 @@ function AddOrderDialog({ open, onClose, onCreated }: {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-1">
                       {product && product.variants && product.variants.length > 0 ? (
                         <Select value={item.variantId} onValueChange={(v) => handleVariantChange(item.id, v)}>
@@ -611,7 +629,7 @@ function AddOrderDialog({ open, onClose, onCreated }: {
 
                     <Input type="number" min={1} value={item.quantity} onChange={e => setItem(item.id, 'quantity', parseInt(e.target.value) || 1)} className="h-8 text-xs text-center" />
                     <Input type="number" min={0} step="0.001" value={item.unitPrice} onChange={e => setItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className="h-8 text-xs" />
-                    
+
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
                       disabled={items.length === 1}
                       onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))}>
@@ -1216,7 +1234,7 @@ export default function OrdersPage() {
                             <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" /> Confirm Order
                           </DropdownMenuItem>
                         )}
-                        {order.status === 'return_requested' && (
+                        {order.status === 'returnedrequested' && (
                           <DropdownMenuItem onClick={async () => {
                             const u = await updateOrderStatus({ orderId: order.id, status: 'returned', note: 'Return approved.', updatedBy: 'Admin', source: 'admin' });
                             handleOrderUpdated(u); toast.success('Return approved');
@@ -1224,7 +1242,7 @@ export default function OrdersPage() {
                             <RotateCcw className="mr-2 h-4 w-4 text-orange-600" /> Approve Return
                           </DropdownMenuItem>
                         )}
-                        {order.status === 'refund_requested' && (
+                        {order.status === 'refundedrequested' && (
                           <DropdownMenuItem onClick={async () => {
                             const u = await updateOrderStatus({ orderId: order.id, status: 'refunded', note: 'Refund processed.', updatedBy: 'Admin', source: 'admin' });
                             handleOrderUpdated(u); toast.success('Refund processed');

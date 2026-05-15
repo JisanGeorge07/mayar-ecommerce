@@ -75,6 +75,24 @@ public class OrderService : IOrderService
             }
 
             order.OrderItems.Add(orderItem);
+
+            // Deduct Stock
+            // if (products.TryGetValue(itemDto.ProductId, out var prod))
+            // {
+            //     var variant = prod.Variants.FirstOrDefault(v => v.Id == (itemDto.VariantId ?? Guid.Empty));
+            //     if (variant != null && variant.StockQuantity.HasValue)
+            //     {
+            //         variant.StockQuantity -= itemDto.Quantity;
+            //         if (variant.StockQuantity <= 0)
+            //         {
+            //             variant.StockQuantity = 0;
+            //             variant.InStock = false;
+            //         }
+                    
+            //         // Update product InStock status
+            //         prod.InStock = prod.Variants.Any(v => v.InStock);
+            //     }
+            // }
         }
 
         // Add initial status history
@@ -204,34 +222,65 @@ public class OrderService : IOrderService
         }
 
         var previousStatus = order.Status;
-        order.Status = newStatus;
-        order.UpdatedAt = DateTimeHelper.GetLocalTime();
 
-        // Update specific timestamps based on status
-        if (newStatus == OrderStatus.InTransit || newStatus == OrderStatus.PickedUp)
+        // 1. Perform stock restoration via Direct SQL if cancelled
+        if (newStatus == OrderStatus.Cancelled && previousStatus != OrderStatus.Cancelled)
         {
-            order.ShippedAt = DateTimeHelper.GetLocalTime();
-        }
-        else if (newStatus == OrderStatus.Delivered)
-        {
-            order.DeliveredAt = DateTimeHelper.GetLocalTime();
+            foreach (var item in order.OrderItems)
+            {
+                if (item.Quantity.HasValue && item.Quantity.Value > 0)
+                {
+                    if (item.ProductVariantId.HasValue)
+                    {
+                        await _context.ProductVariants
+                            .Where(v => v.Id == item.ProductVariantId.Value)
+                            .ExecuteUpdateAsync(s => s
+                                .SetProperty(v => v.StockQuantity, v => v.StockQuantity + item.Quantity.Value)
+                                .SetProperty(v => v.InStock, true));
+                    }
+                    else
+                    {
+                        await _context.ProductVariants
+                            .Where(v => v.ProductId == item.ProductId && v.IsDefault)
+                            .ExecuteUpdateAsync(s => s
+                                .SetProperty(v => v.StockQuantity, v => v.StockQuantity + item.Quantity.Value)
+                                .SetProperty(v => v.InStock, true));
+                    }
+
+                    await _context.Products
+                        .Where(p => p.Id == item.ProductId)
+                        .ExecuteUpdateAsync(s => s.SetProperty(p => p.InStock, true));
+                }
+            }
         }
 
-        // Add status history
+        // 2. Update Order status via Direct SQL to avoid tracking/concurrency issues
+        var now = DateTimeHelper.GetLocalTime();
+        await _context.Orders
+            .Where(o => o.Id == orderId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(o => o.Status, newStatus)
+                .SetProperty(o => o.UpdatedAt, now)
+                .SetProperty(o => o.ShippedAt, o => (newStatus == OrderStatus.InTransit || newStatus == OrderStatus.PickedUp) ? now : o.ShippedAt)
+                .SetProperty(o => o.DeliveredAt, o => (newStatus == OrderStatus.Delivered) ? now : o.DeliveredAt)
+                .SetProperty(o => o.PaymentStatus, o => (newStatus == OrderStatus.Refunded || (newStatus == OrderStatus.Returned && o.PaymentStatus == PaymentStatus.Paid)) ? PaymentStatus.Refunded : 
+                                                        (newStatus == OrderStatus.Delivered && o.PaymentMethod == PaymentMethod.CashOnDelivery) ? PaymentStatus.Paid : o.PaymentStatus));
+
+        // 3. Add status history record
         var statusHistory = new OrderStatusHistory
         {
             Id = Guid.NewGuid(),
-            OrderId = order.Id,
+            OrderId = orderId,
             FromStatus = previousStatus,
             ToStatus = newStatus,
             Note = dto.Note,
             UpdatedByName = dto.UpdatedByName ?? "Admin",
             Source = dto.Source ?? "admin",
             ChangedBy = changedBy,
-            CreatedAt = DateTimeHelper.GetLocalTime()
+            CreatedAt = now
         };
+        
         _context.OrderStatusHistory.Add(statusHistory);
-
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Order {OrderId} status updated from {From} to {To}", orderId, previousStatus, newStatus);
@@ -277,7 +326,14 @@ public class OrderService : IOrderService
             });
         }
 
-        return order.ToDto();
+        // Re-fetch the full order to ensure all navigation properties and timestamps are perfectly synced
+        // Re-fetch with AsNoTracking to ensure we get the fresh data from the DB, bypassing the EF cache
+        return await _context.Orders
+            .AsNoTracking()
+            .Include(o => o.OrderItems)
+            .Include(o => o.StatusHistory)
+            .FirstOrDefaultAsync(o => o.Id == orderId)
+            .ContinueWith(t => t.Result?.ToDto());
     }
 
     public async Task<OrderDto?> UpdatePaymentStatusAsync(Guid orderId, string paymentStatus, string? transactionId = null, string? gatewayResponse = null)
@@ -635,6 +691,24 @@ public class OrderService : IOrderService
             }
 
             order.OrderItems.Add(orderItem);
+
+            // Deduct Stock
+            if (products.TryGetValue(itemDto.ProductId, out var pAdmin))
+            {
+                var variant = pAdmin.Variants.FirstOrDefault(v => v.Id == (itemDto.VariantId ?? Guid.Empty));
+                if (variant != null && variant.StockQuantity.HasValue)
+                {
+                    variant.StockQuantity -= itemDto.Quantity;
+                    if (variant.StockQuantity <= 0)
+                    {
+                        variant.StockQuantity = 0;
+                        variant.InStock = false;
+                    }
+                    
+                    // Update product InStock status
+                    pAdmin.InStock = pAdmin.Variants.Any(v => v.InStock);
+                }
+            }
         }
 
         // Add initial status history

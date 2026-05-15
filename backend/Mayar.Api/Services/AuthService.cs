@@ -26,6 +26,7 @@ namespace Mayar.Api.Services
                 return null;
             }
 
+            var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
             var user = new User
             {
                 Name = request.Name,
@@ -34,7 +35,9 @@ namespace Mayar.Api.Services
                 PhoneNumber = request.PhoneNumber,
                 Address = request.Address,
                 Country = request.Country,
-                PinCode = request.PinCode
+                PinCode = request.PinCode,
+                Role = "User",
+                RoleId = userRole?.Id
             };
 
             context.Users.Add(user);
@@ -69,17 +72,7 @@ namespace Mayar.Api.Services
                 ReferenceId = user.Id.ToString()
             });
 
-            return new UserResponseDto
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                PhoneNumber = user.PhoneNumber,
-                Address = user.Address,
-                Country = user.Country,
-                PinCode = user.PinCode,
-            };
+            return MapToUserResponse(user);
         }
 
         public async Task<TokenResponseDto?> LoginAsync(string email, string password)
@@ -96,13 +89,18 @@ namespace Mayar.Api.Services
 
         public async Task<TokenResponseDto?> AdminLoginAsync(string email, string password)
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await context.Users
+                .Include(u => u.RoleEntity)
+                .ThenInclude(r => r!.Permissions)
+                .FirstOrDefaultAsync(u => u.Email == email);
+
             if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 return null;
             }
 
-            if (user.Role != "Admin")
+            // An admin is someone who has a role with at least one permission path
+            if (user.RoleEntity == null || !user.RoleEntity.Permissions.Any())
             {
                 logger.LogWarning("Non-admin user attempted admin login: {UserId}", user.Id);
                 return null;
@@ -139,26 +137,24 @@ namespace Mayar.Api.Services
 
         public async Task<UserResponseDto?> GetUserByIdAsync(Guid userId)
         {
-            var user = await context.Users.FindAsync(userId);
+            var user = await context.Users
+                .Include(u => u.RoleEntity)
+                .ThenInclude(r => r!.Permissions)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
             if (user is null)
                 return null;
 
-            return new UserResponseDto
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                PhoneNumber = user.PhoneNumber,
-                Address = user.Address,
-                Country = user.Country,
-                PinCode = user.PinCode,
-            };
+            return MapToUserResponse(user);
         }
 
         public async Task<UserResponseDto?> UpdateUserAsync(Guid userId, UserUpdateDto request)
         {
-            var user = await context.Users.FindAsync(userId);
+            var user = await context.Users
+                .Include(u => u.RoleEntity)
+                .ThenInclude(r => r!.Permissions)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
             if (user is null)
                 return null;
 
@@ -171,16 +167,22 @@ namespace Mayar.Api.Services
             await context.SaveChangesAsync();
             logger.LogInformation("User profile updated: {UserId}", user.Id);
 
+            return MapToUserResponse(user);
+        }
+
+        private UserResponseDto MapToUserResponse(User user)
+        {
             return new UserResponseDto
             {
                 Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
-                Role = user.Role,
+                Role = user.RoleEntity?.Name ?? user.Role,
                 PhoneNumber = user.PhoneNumber,
                 Address = user.Address,
                 Country = user.Country,
                 PinCode = user.PinCode,
+                AllowedPaths = user.RoleEntity?.Permissions.Select(p => p.Path).ToList() ?? new List<string>()
             };
         }
 

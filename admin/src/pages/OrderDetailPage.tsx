@@ -36,10 +36,10 @@ const statusColor: Record<OrderStatus, string> = {
   out_for_delivery: 'bg-orange-100 text-orange-800 border-orange-200',
   delivered: 'bg-green-100 text-green-800 border-green-200',
   cancelled: 'bg-red-100 text-red-800 border-red-200',
-  return_requested: 'bg-orange-100 text-orange-800 border-orange-200',
   returned: 'bg-gray-100 text-gray-700 border-gray-200',
-  refund_requested: 'bg-rose-100 text-rose-800 border-rose-200',
   refunded: 'bg-purple-100 text-purple-800 border-purple-200',
+  refundedrequested: 'bg-rose-100 text-rose-800 border-rose-200',
+  returnedrequested: 'bg-orange-100 text-orange-800 border-orange-200',
 };
 
 const paymentStatusColor: Record<string, string> = {
@@ -57,9 +57,9 @@ const flowIconMap: Record<OrderStatus, React.ElementType> = {
   out_for_delivery: Truck,
   delivered: Home,
   cancelled: XCircle,
-  return_requested: RotateCcw,
+  returnedrequested: RotateCcw,
   returned: RotateCcw,
-  refund_requested: DollarSign,
+  refundedrequested: DollarSign,
   refunded: DollarSign,
 };
 
@@ -73,19 +73,26 @@ const sourceColor: Record<string, string> = {
 
 const ALL_STATUSES: OrderStatus[] = [
   'pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery',
-  'delivered', 'cancelled', 'return_requested', 'returned', 'refund_requested', 'refunded',
+  'delivered', 'cancelled', 'returnedrequested', 'returned', 'refundedrequested', 'refunded',
 ];
 
-const formatDateTime = (iso: string) =>
-  new Date(iso).toLocaleString('en-KW', {
+const formatDateTime = (iso: string) => {
+  if (!iso) return '-';
+  // Strip 'Z' if present to treat the time as local, then force Kuwait offset
+  const base = iso.replace('Z', '').split('+')[0];
+  const dateStr = `${base}+03:00`;
+
+  return new Date(dateStr).toLocaleString('en-KW', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Kuwait'
   });
+};
 
 // ─── Status Stepper ───────────────────────────────────────────────────────────
 
 function StatusStepper({ currentStatus }: { currentStatus: OrderStatus }) {
-  const isException = ['cancelled', 'return_requested', 'returned', 'refund_requested', 'refunded'].includes(currentStatus);
+  const isException = ['cancelled', 'returned', 'refunded', 'refundedrequested', 'returnedrequested'].includes(currentStatus);
   const currentFlowIdx = ORDER_STATUS_FLOW.indexOf(currentStatus);
 
   return (
@@ -186,8 +193,10 @@ export default function OrderDetailPage() {
       setNewStatus('');
       setNote('');
       toast.success(`Status updated to "${ORDER_STATUS_LABELS[newStatus]}"`);
-    } catch {
-      toast.error('Failed to update status');
+    } catch (err: any) {
+      console.error(err);
+      const msg = err.response?.data?.message || 'Failed to update status';
+      toast.error(msg);
     } finally {
       setUpdating(false);
     }

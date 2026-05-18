@@ -235,7 +235,7 @@ export default function RolesPermissionsPage() {
         rolesService.getRoles(),
         adminUserService.getAdminUsers(),
       ]);
-      setRoles(r);
+      setRoles(r.filter(role => role.name !== 'User'));
       setUsers(u);
     } catch (error) {
       toast.error('Failed to load data');

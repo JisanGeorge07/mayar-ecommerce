@@ -47,6 +47,11 @@ namespace Mayar.Api.Controllers
             var role = await context.Roles.FindAsync(request.RoleId);
             if (role == null) return BadRequest(new { message = "Invalid role ID." });
 
+            if (role.Name == "User")
+            {
+                return BadRequest(new { message = "Cannot assign the default customer role to admin users." });
+            }
+
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -79,6 +84,11 @@ namespace Mayar.Api.Controllers
 
             var role = await context.Roles.FindAsync(request.RoleId);
             if (role == null) return BadRequest(new { message = "Invalid role ID." });
+
+            if (role.Name == "User")
+            {
+                return BadRequest(new { message = "Cannot assign the default customer role to admin users." });
+            }
 
             user.Name = request.Name;
             user.Email = request.Email;

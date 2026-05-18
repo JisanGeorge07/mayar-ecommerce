@@ -17,6 +17,7 @@ namespace Mayar.Api.Controllers
         {
             var roles = await context.Roles
                 .Include(r => r.Permissions)
+                .Where(r => r.Name != "User")
                 .ToListAsync();
 
             return Ok(roles.Select(r => new RoleDto
@@ -63,6 +64,11 @@ namespace Mayar.Api.Controllers
 
             if (role == null) return NotFound();
 
+            if (role.Name == "User")
+            {
+                return BadRequest(new { message = "Cannot modify the default customer role." });
+            }
+
             role.Name = request.Name;
             role.Description = request.Description;
 
@@ -83,6 +89,11 @@ namespace Mayar.Api.Controllers
         {
             var role = await context.Roles.FindAsync(id);
             if (role == null) return NotFound();
+
+            if (role.Name == "User")
+            {
+                return BadRequest(new { message = "Cannot delete the default customer role." });
+            }
 
             // Check if any users are assigned to this role
             if (await context.Users.AnyAsync(u => u.RoleId == id))

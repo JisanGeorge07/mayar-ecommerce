@@ -145,9 +145,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin">
           {NAV_SECTIONS.map(section => {
-            const visibleItems = section.items.filter(item => 
-              user?.allowedPaths?.includes(item.path)
-            );
+            const hasPathRestrictions = Array.isArray(user?.allowedPaths) && user.allowedPaths.length > 0;
+            const visibleItems = hasPathRestrictions
+              ? section.items.filter(item => user!.allowedPaths!.includes(item.path))
+              : section.items;
 
             if (visibleItems.length === 0) return null;
 

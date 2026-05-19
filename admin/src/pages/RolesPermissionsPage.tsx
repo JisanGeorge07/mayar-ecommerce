@@ -43,6 +43,7 @@ const MENU_SECTIONS = [
       { path: '/product-types', title: 'Product Types', icon: Grid3X3         },
       { path: '/products',      title: 'Products',      icon: Package         },
       { path: '/orders',        title: 'Orders',        icon: ShoppingCart    },
+      { path: '/customers',     title: 'Customers',     icon: Users           },
     ],
   },
   {

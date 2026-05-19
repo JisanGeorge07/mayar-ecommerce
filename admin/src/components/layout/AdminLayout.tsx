@@ -14,6 +14,10 @@ import { globalSearch, type SearchResult } from '@/services/searchService';
 import logoWhite from '@/assets/logo-white.png';
 import logoSmallWhite from '@/assets/logo-small-white.png';
 
+// Paths added on the frontend only — not yet tracked by the backend permission system.
+// These are always shown regardless of allowedPaths returned from the server.
+const FRONTEND_ONLY_PATHS = ['/customers', '/roles-permissions'];
+
 const NAV_SECTIONS = [
   {
     label: 'Main',
@@ -146,9 +150,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin">
           {NAV_SECTIONS.map(section => {
             const hasPathRestrictions = Array.isArray(user?.allowedPaths) && user.allowedPaths.length > 0;
-            const visibleItems = hasPathRestrictions
-              ? section.items.filter(item => user!.allowedPaths!.includes(item.path))
-              : section.items;
+            const visibleItems = section.items.filter(item =>
+              FRONTEND_ONLY_PATHS.includes(item.path) ||
+              !hasPathRestrictions ||
+              user!.allowedPaths!.includes(item.path)
+            );
 
             if (visibleItems.length === 0) return null;
 

@@ -30,6 +30,7 @@ import ReturnsExchangePage from "./pages/ReturnsExchangePage";
 import TermsConditionsPage from "./pages/TermsConditionsPage";
 import CouponsPage from "./pages/CouponsPage";
 import RolesPermissionsPage from "./pages/RolesPermissionsPage";
+import CustomersPage from "./pages/CustomersPage";
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/coupons" element={<ProtectedAdmin><CouponsPage /></ProtectedAdmin>} />
             <Route path="/roles-permissions" element={<ProtectedAdmin><RolesPermissionsPage /></ProtectedAdmin>} />
             <Route path="/orders" element={<ProtectedAdmin><OrdersPage /></ProtectedAdmin>} />
+            <Route path="/customers" element={<ProtectedAdmin><CustomersPage /></ProtectedAdmin>} />
             <Route path="/orders/:id" element={<ProtectedAdmin><OrderDetailPage /></ProtectedAdmin>} />
             <Route path="/pages/about-us" element={<ProtectedAdmin><AboutUsPage /></ProtectedAdmin>} />
             <Route path="/pages/privacy-policy" element={<ProtectedAdmin><PrivacyPolicyPage /></ProtectedAdmin>} />

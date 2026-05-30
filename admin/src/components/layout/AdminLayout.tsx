@@ -5,7 +5,7 @@ import {
   Search as SearchIcon, Settings, Tag, Bell, User, ChevronLeft,
   ChevronRight, Grid3X3, LogOut, BellRing, Sparkles, CircleDot, LayoutGrid,
   Building2, Shield, MessageCircle, Truck, RefreshCcw, ScrollText, Ticket,
-  ShoppingCart, Users,
+  ShoppingCart, Users, Contact,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +13,10 @@ import { useNotifications } from '@/context/NotificationContext';
 import { globalSearch, type SearchResult } from '@/services/searchService';
 import logoWhite from '@/assets/logo-white.png';
 import logoSmallWhite from '@/assets/logo-small-white.png';
+
+// Paths added on the frontend only — not yet tracked by the backend permission system.
+// These are always shown regardless of allowedPaths returned from the server.
+const FRONTEND_ONLY_PATHS = ['/customers', '/roles-permissions'];
 
 const NAV_SECTIONS = [
   {
@@ -24,6 +28,7 @@ const NAV_SECTIONS = [
       { title: 'Product Types', path: '/product-types', icon: Grid3X3 },
       { title: 'Products', path: '/products', icon: Package },
       { title: 'Orders', path: '/orders', icon: ShoppingCart },
+      { title: 'Customers', path: '/customers', icon: Contact },
     ],
   },
   {
@@ -144,8 +149,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin">
           {NAV_SECTIONS.map(section => {
-            const visibleItems = section.items.filter(item => 
-              user?.allowedPaths?.includes(item.path)
+            const hasPathRestrictions = Array.isArray(user?.allowedPaths) && user.allowedPaths.length > 0;
+            const visibleItems = section.items.filter(item =>
+              FRONTEND_ONLY_PATHS.includes(item.path) ||
+              !hasPathRestrictions ||
+              user!.allowedPaths!.includes(item.path)
             );
 
             if (visibleItems.length === 0) return null;

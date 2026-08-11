@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       "/api": {
-        target: "https://jophybabu60-033-site5.rtempurl.com",
+        target: "https://jophybabu60-033-site5.itempurl.com",
         changeOrigin: true,
         secure: false,
       },
